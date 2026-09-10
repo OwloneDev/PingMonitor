@@ -114,13 +114,20 @@ function New-CheckBox {
     return $checkBox
 }
 
-# Создать список
-function New-ListBox {
-    $listBox = New-Object System.Windows.Forms.ListBox
-    $listBox.Dock = [System.Windows.Forms.DockStyle]::Fill
-    $listBox.Font = New-Object System.Drawing.Font("Consolas", 10)
+# Создать дерево
+function New-TreeView {
+    $treeView = New-Object System.Windows.Forms.TreeView
+    $treeView.Dock = [System.Windows.Forms.DockStyle]::Fill
+    $treeView.Font = New-Object System.Drawing.Font("Consolas", 10)
+    $treeView.BackColor = [System.Drawing.Color]::Black
+    $treeView.ForeColor = [System.Drawing.Color]::White
+    $treeView.HideSelection = $false
+    $treeView.ShowLines = $false
+    $treeView.ShowRootLines = $false
+    $treeView.ShowPlusMinus = $true
+    $treeView.FullRowSelect = $true
 
-    return $listBox
+    return $treeView
 }
 
 # Создать таблицу данных

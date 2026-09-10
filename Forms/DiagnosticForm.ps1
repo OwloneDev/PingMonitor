@@ -2,9 +2,48 @@
 function Show-DiagnosticForm {
     # Добавить в список серверов
     function Add-ToServerList {
-        foreach ($server in $serverList) {
-            [void]$serversListBox.Items.Add($server.DisplayText)
+        # Добавить группу сервера
+        function Add-ServerGroup {
+            param($Title, $Servers, $Color)
+
+            if ($Servers.Count -eq 0) { return }
+
+            $groupNode = New-Object System.Windows.Forms.TreeNode($Title)
+            $groupNode.ForeColor = $Color
+            $groupNode.NodeFont = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
+            [void]$serversTree.Nodes.Add($groupNode)
+
+            foreach ($server in $Servers) {
+                $childNode = New-Object System.Windows.Forms.TreeNode($server.DisplayText)
+                $childNode.Tag = $server
+                $childNode.ForeColor = $Color
+                [void]$groupNode.Nodes.Add($childNode)
+            }
+
+            $groupNode.Expand()
         }
+
+        $serversTree.Nodes.Clear()
+        $errorServers = @()
+        $failServers = @()
+        $okServers = @()
+        $unknownServers = @()
+
+        foreach ($server in $serverList) {
+            $status = $script:serverStatuses[$server.IP]
+
+            switch ($status) {
+                "[ERR]" { $errorServers += $server }
+                "[FAIL]" { $failServers += $server }
+                "[OK]" { $okServers += $server }
+                default { $unknownServers += $server }
+            }
+        }
+
+        Add-ServerGroup -Title "[ERROR]" -Servers $errorServers -Color ([System.Drawing.Color]::Crimson)
+        Add-ServerGroup -Title "[FAIL]" -Servers $failServers -Color ([System.Drawing.Color]::Red)
+        Add-ServerGroup -Title "[OK]" -Servers $okServers -Color ([System.Drawing.Color]::Chartreuse)
+        Add-ServerGroup -Title "[UNKNOWN]" -Servers $unknownServers -Color ([System.Drawing.Color]::White)
     }
 
     # Добавить в консоль диагностики
@@ -23,10 +62,10 @@ function Show-DiagnosticForm {
 
     # Получить выбранный сервер
     function Get-SelectedServer {
-        $index = $serversListBox.SelectedIndex
+        $node = $serversTree.SelectedNode
 
-        if ($index -ge 0 -and $index -lt $serverList.Count) {
-            return $serverList[$index]
+        if ($null -ne $node -and $null -ne $node.Tag) {
+            return $node.Tag
         }
 
         return $null
@@ -192,7 +231,6 @@ function Show-DiagnosticForm {
         Add-ToDiagnosticConsole -Text "Обмен пакетами с $($server.IP) по с 32 байтами данных:"
 
         $pingButton.Text = "Стоп"
-        $serversListBox.Enabled = $false
         $script:isDiagnosticPinging = $true
         $script:diagnosticCts = New-Object System.Threading.CancellationTokenSource
 
@@ -206,7 +244,6 @@ function Show-DiagnosticForm {
             Add-ToDiagnosticConsole -Text "`n"
 
             $pingButton.Text = "Пинг"
-            $serversListBox.Enabled = $true
             $script:isDiagnosticPinging = $false
             $script:diagnosticCts = $null
         }
@@ -328,7 +365,7 @@ function Show-DiagnosticForm {
 
     $diagnosticConsole = New-RichTextBox
 
-    $serversListBox = New-ListBox
+    $serversTree = New-TreeView
 
     $infinityCheckBox = New-CheckBox -X 10 -Y 10 -Width 100 -Height 30 -Text "Бесконечный"
 
@@ -336,13 +373,24 @@ function Show-DiagnosticForm {
     $clearButton = New-Button -X 210 -Y 10 -Width 90 -Text "Очистить"
     $closeButton = New-Button -X 305 -Y 10 -Width 90 -Text "Закрыть"
 
-    $serversListBox.Add_SelectedIndexChanged({ Start-ServerInfo })
+    $serversTree.Add_BeforeSelect({
+            param($s, $e)
+
+            if ($script:isDiagnosticPinging) {
+                $e.Cancel = $true
+            }
+        })
+    $serversTree.Add_AfterSelect({
+            if ($null -ne $serversTree.SelectedNode -and $null -ne $serversTree.SelectedNode.Tag) {
+                Start-ServerInfo
+            }
+        })
 
     $infinityCheckBox.Checked = $false
 
     $diagnosticPanel.Controls.Add($diagnosticConsole)
     $serversPanel.Width = 200
-    $serversPanel.Controls.Add($serversListBox)
+    $serversPanel.Controls.Add($serversTree)
     $bottomPanel.Height = 50
     $bottomPanel.Controls.Add($infinityCheckBox)
     $bottomPanel.Controls.Add($pingButton)

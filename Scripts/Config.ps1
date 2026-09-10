@@ -9,7 +9,7 @@ function Import-Config {
         DisplayMode     = "Full"
         Interval        = 60
         FontSize        = 10
-        GroupingEnabled = $false
+        GroupingEnabled = $true
         LoggingEnabled  = $false
     }
             

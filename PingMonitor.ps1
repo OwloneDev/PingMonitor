@@ -71,6 +71,7 @@ function Invoke-Async {
 
 # Запустить программу
 function Start-App {
+    [System.Windows.Forms.Application]::EnableVisualStyles()
     Import-Config
     Show-MainForm
 }
@@ -78,6 +79,7 @@ function Start-App {
 # Глобальные переменные
 $script:configFile = Get-ConfigFile
 $script:logFile = Get-LogFile
+$script:serverStatuses = @{}
 $script:config = $null
 $script:diagnosticCts = $null
 $script:console = $null
@@ -89,7 +91,7 @@ $script:dragRowIndex = -1
 $script:dragInsertIndex = -1
 $script:dragInsertSide = "Top"
 $script:currentLog = ""
-$script:version = "v1.0.3"
+$script:version = "v1.0.4"
 
 # Cкрипты
 . "$PSScriptRoot\Forms\DiagnosticForm.ps1"

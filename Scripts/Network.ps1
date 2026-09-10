@@ -87,14 +87,14 @@ function Start-PingJob {
                     $result = $ping.Send($ComputerName, 3000)
 
                     if ($result.Status -eq [System.Net.NetworkInformation.IPStatus]::Success) {
-                        return @{ Success = $true; Color = [System.Drawing.Color]::Chartreuse; Status = "  [OK]" }
+                        return @{ Success = $true; Color = [System.Drawing.Color]::Chartreuse; Status = "[OK]" }
                     }
                     else {
                         return @{ Success = $false; Color = [System.Drawing.Color]::Red; Status = "[FAIL]" }
                     }
                 }
                 catch {
-                    return @{ Success = $false; Color = [System.Drawing.Color]::Crimson; Status = " [ERR]" }
+                    return @{ Success = $false; Color = [System.Drawing.Color]::Crimson; Status = "[ERR]" }
                 }
             }
 
@@ -129,7 +129,7 @@ function Start-PingJob {
                     $paddedName = $displayText.PadRight($nameLength, ' ')
                     $NameCallback.Invoke($paddedName)
                     $res = Ping-Server -ComputerName $server.IP
-                    $StatusCallback.Invoke($res.Status, $res.Color)
+                    $StatusCallback.Invoke($server.IP, $res.Status, $res.Color)
                 }
             }
 
@@ -158,7 +158,9 @@ function Start-PingJob {
     }
 
     $statusCallback = {
-        param($Status, $Color)
+        param($Ip, $Status, $Color)
+        
+        $script:serverStatuses[$Ip] = $Status
         
         Set-ConsoleColor -Color $Color
         Add-ToConsole -Text "$Status`n"
