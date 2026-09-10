@@ -85,8 +85,11 @@ $script:timer = $null
 $script:pingButton = $null
 $script:isPinging = $false
 $script:isDiagnosticPinging = $false
+$script:dragRowIndex = -1
+$script:dragInsertIndex = -1
+$script:dragInsertSide = "Top"
 $script:currentLog = ""
-$script:version = "v1.0.2"
+$script:version = "v1.0.3"
 
 # Cкрипты
 . "$PSScriptRoot\Forms\DiagnosticForm.ps1"
