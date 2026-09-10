@@ -170,9 +170,10 @@ function Add-ToDataGridView {
 
     $DataGridView.Columns.Add("Name", "Имя сервера")
     $DataGridView.Columns.Add("IP", "IP-адрес")
+    $DataGridView.Columns.Add("Group", "Группа")
 
     foreach ($server in $script:config.Servers) {
-        $DataGridView.Rows.Add($server.Name, $server.IP)
+        $DataGridView.Rows.Add($server.Name, $server.IP, $server.Group)
     }
 }
 
@@ -181,4 +182,18 @@ function Select-StartOfConsole {
     param($Console)
 
     $Console.SelectionStart = $Console.TextLength
+}
+
+# Читать из таблицы даных
+function Read-DataGridView {
+    param($Row, $Index)
+
+    $value = $Row.Cells[$Index].Value
+
+    if ($value) {
+        return $value.ToString()
+    }
+    else {
+        return $null
+    }
 }

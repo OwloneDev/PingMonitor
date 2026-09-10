@@ -1,14 +1,15 @@
 ﻿# Импортировать конфигурацию
 function Import-Config {
     $defaults = @{
-        WindowSize     = [PSCustomObject]@{
+        WindowSize      = [PSCustomObject]@{
             Main       = [PSCustomObject]@{ Width = 360; Height = 200 }
             Diagnostic = [PSCustomObject]@{ Width = 640; Height = 320 }
         }
-        DisplayMode    = "Full"
-        Interval       = 60
-        FontSize       = 10
-        LoggingEnabled = $false
+        DisplayMode     = "Full"
+        Interval        = 60
+        FontSize        = 10
+        GroupingEnabled = $false
+        LoggingEnabled  = $false
     }
             
     if (Test-Path $script:configFile) {
@@ -27,14 +28,15 @@ function Import-Config {
     }
     if (-not $script:config) {
         $script:config = [PSCustomObject]@{
-            Servers        = @(
+            Servers         = @(
                 [PSCustomObject]@{ Name = "Локальный"; IP = "127.0.0.1" }
             )
-            WindowSize     = $defaults.WindowSize
-            DisplayMode    = $defaults.DisplayMode
-            Interval       = $defaults.Interval
-            FontSize       = $defaults.FontSize
-            LoggingEnabled = $defaults.LoggingEnabled
+            WindowSize      = $defaults.WindowSize
+            DisplayMode     = $defaults.DisplayMode
+            Interval        = $defaults.Interval
+            FontSize        = $defaults.FontSize
+            GroupingEnabled = $defaults.GroupingEnabled
+            LoggingEnabled  = $defaults.LoggingEnabled
         }
 
         Export-Config

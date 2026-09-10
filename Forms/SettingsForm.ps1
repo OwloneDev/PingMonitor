@@ -15,7 +15,8 @@ function Show-SettingsForm {
     $intervalNumericUpDown = New-NumericUpDown -X 140 -Y 230 -Min 1 -Max 999 -Value $script:config.Interval
     $fontSizeNumericUpDown = New-NumericUpDown -X 140 -Y 260 -Min 10 -Max 20 -Value $script:config.FontSize
 
-    $loggingCheckBox = New-CheckBox -X 10 -Y 290 -Width 200 -Height 20 -Text "Вести запись в журнал"
+    $groupingCheckBox = New-Checkbox -X 10 -Y 290 -Width 200 -Height 20 -Text "Группировать"
+    $loggingCheckBox = New-CheckBox -X 10 -Y 310 -Width 200 -Height 20 -Text "Вести запись в журнал"
 
     $serverDataGridView = New-DataGridView
 
@@ -24,6 +25,7 @@ function Show-SettingsForm {
     $okButton.DialogResult = "OK"
     $cancelButton.DialogResult = "Cancel"
 
+    $groupingCheckBox.Checked = $script:config.GroupingEnabled
     $loggingCheckBox.Checked = $script:config.LoggingEnabled
 
     $settingsForm.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedSingle
@@ -38,6 +40,7 @@ function Show-SettingsForm {
     $settingsForm.Controls.Add($displayComboBox)
     $settingsForm.Controls.Add($intervalNumericUpDown)
     $settingsForm.Controls.Add($fontSizeNumericUpDown)
+    $settingsForm.Controls.Add($groupingCheckBox)
     $settingsForm.Controls.Add($loggingCheckBox)
     $settingsForm.AcceptButton = $okButton
     $settingsForm.CancelButton = $cancelButton
@@ -48,10 +51,15 @@ function Show-SettingsForm {
         $newServers = @()
 
         foreach ($row in $serverDataGridView.Rows) {
-            if ($row.Cells[0].Value) {
+            $name = Read-DataGridView -Row $row -Index 0
+            $ip = Read-DataGridView -Row $row -Index 1
+            $group = Read-DataGridView -Row $row -Index 2
+
+            if ($null -ne $ip) {
                 $newServers += [PSCustomObject]@{
-                    Name = $row.Cells[0].Value.ToString()
-                    IP   = $row.Cells[1].Value.ToString()
+                    Name  = $name
+                    IP    = $ip
+                    Group = $group
                 }
             }
         }
@@ -59,6 +67,7 @@ function Show-SettingsForm {
         $script:config.Servers = $newServers
         $script:config.Interval = [int]$intervalNumericUpDown.Value
         $script:config.FontSize = [int]$fontSizeNumericUpDown.Value
+        $script:config.GroupingEnabled = $groupingCheckBox.Checked
         $script:config.LoggingEnabled = $loggingCheckBox.Checked
         $script:timer.Interval = Get-Interval
         $script:console.Font = New-Object System.Drawing.Font("Consolas", $script:config.FontSize)

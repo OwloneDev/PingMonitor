@@ -86,7 +86,7 @@ $script:pingButton = $null
 $script:isPinging = $false
 $script:isDiagnosticPinging = $false
 $script:currentLog = ""
-$script:version = "v1.0.0"
+$script:version = "v1.0.1"
 
 # Cкрипты
 . "$PSScriptRoot\Scripts\Config.ps1"
