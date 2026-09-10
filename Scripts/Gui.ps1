@@ -39,7 +39,6 @@ function New-Label {
     $label = New-Object System.Windows.Forms.Label
     $label.Location = New-Object System.Drawing.Point($X, $Y)
     $label.Size = New-Object System.Drawing.Size($Width, $Height)
-    $label.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
     $label.Text = $Text
 
     return $label
@@ -126,9 +125,11 @@ function New-ListBox {
 
 # Создать таблицу данных
 function New-DataGridView {
+    param($Width)
+
     $dataGridView = New-Object System.Windows.Forms.DataGridView
     $dataGridView.Location = New-Object System.Drawing.Point(10, 10)
-    $dataGridView.Size = New-Object System.Drawing.Size(364, 180)
+    $dataGridView.Size = New-Object System.Drawing.Size($Width, 180)
     $dataGridView.AllowUserToResizeRows = $false
     $dataGridView.AllowUserToResizeColumns = $false
     $dataGridView.MultiSelect = $false
@@ -162,19 +163,6 @@ function Add-ToConsole {
     Select-StartOfConsole -Console $script:console
 
     $script:console.ScrollToCaret()
-}
-
-# Добавить данные в таблицу
-function Add-ToDataGridView {
-    param($DataGridView)
-
-    $DataGridView.Columns.Add("Name", "Имя сервера")
-    $DataGridView.Columns.Add("IP", "IP-адрес")
-    $DataGridView.Columns.Add("Group", "Группа")
-
-    foreach ($server in $script:config.Servers) {
-        $DataGridView.Rows.Add($server.Name, $server.IP, $server.Group)
-    }
 }
 
 # Выбрать начало консоли

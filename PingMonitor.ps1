@@ -86,14 +86,15 @@ $script:pingButton = $null
 $script:isPinging = $false
 $script:isDiagnosticPinging = $false
 $script:currentLog = ""
-$script:version = "v1.0.1"
+$script:version = "v1.0.2"
 
 # Cкрипты
-. "$PSScriptRoot\Scripts\Config.ps1"
-. "$PSScriptRoot\Scripts\Network.ps1"
-. "$PSScriptRoot\Scripts\Gui.ps1"
-. "$PSScriptRoot\Forms\MainForm.ps1"
 . "$PSScriptRoot\Forms\DiagnosticForm.ps1"
+. "$PSScriptRoot\Forms\GroupsForm.ps1"
+. "$PSScriptRoot\Forms\MainForm.ps1"
 . "$PSScriptRoot\Forms\SettingsForm.ps1"
+. "$PSScriptRoot\Scripts\Config.ps1"
+. "$PSScriptRoot\Scripts\Gui.ps1"
+. "$PSScriptRoot\Scripts\Network.ps1"
 
 Start-App

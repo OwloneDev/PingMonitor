@@ -1,6 +1,7 @@
 ﻿# Импортировать конфигурацию
 function Import-Config {
     $defaults = @{
+        Groups          = @()
         WindowSize      = [PSCustomObject]@{
             Main       = [PSCustomObject]@{ Width = 360; Height = 200 }
             Diagnostic = [PSCustomObject]@{ Width = 640; Height = 320 }
@@ -31,6 +32,7 @@ function Import-Config {
             Servers         = @(
                 [PSCustomObject]@{ Name = "Локальный"; IP = "127.0.0.1" }
             )
+            Groups          = $defaults.Groups
             WindowSize      = $defaults.WindowSize
             DisplayMode     = $defaults.DisplayMode
             Interval        = $defaults.Interval

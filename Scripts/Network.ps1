@@ -119,7 +119,7 @@ function Start-PingJob {
                         $displayText = "  " + $displayText
                     }
                     else {
-                        if (-not $isFirst) {
+                        if (-not $isFirst -and $null -ne $lastGroup) {
                             $EmptyCallback.Invoke()
                             $lastGroup = $null
                         }
