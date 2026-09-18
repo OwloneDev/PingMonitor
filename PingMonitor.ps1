@@ -91,7 +91,7 @@ $script:dragRowIndex = -1
 $script:dragInsertIndex = -1
 $script:dragInsertSide = "Top"
 $script:currentLog = ""
-$script:version = "v1.0.4"
+$script:version = "v1.0.5"
 
 # Cкрипты
 . "$PSScriptRoot\Forms\DiagnosticForm.ps1"

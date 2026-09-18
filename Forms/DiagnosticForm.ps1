@@ -398,7 +398,7 @@ function Show-DiagnosticForm {
     $bottomPanel.Controls.Add($closeButton)
 
     $diagnosticForm.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::Sizable
-    $diagnosticForm.MinimumSize = New-Object System.Drawing.Size(640, 320)
+    $diagnosticForm.MinimumSize = New-Object System.Drawing.Size(560, 320)
     $diagnosticForm.MinimizeBox = $false
     $diagnosticForm.Controls.Add($diagnosticPanel)
     $diagnosticForm.Controls.Add($serversPanel)

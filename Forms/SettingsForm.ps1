@@ -200,7 +200,7 @@ function Show-SettingsForm {
     $displayComboBox = New-ComboBox
 
     $intervalNumericUpDown = New-NumericUpDown -X 140 -Y 230 -Min 1 -Max 999 -Value $script:config.Interval
-    $fontSizeNumericUpDown = New-NumericUpDown -X 140 -Y 260 -Min 10 -Max 20 -Value $script:config.FontSize
+    $fontSizeNumericUpDown = New-NumericUpDown -X 140 -Y 260 -Min 8 -Max 20 -Value $script:config.FontSize
 
     $loggingCheckBox = New-CheckBox -X 10 -Y 290 -Width 180 -Height 20 -Text "Вести запись в журнал"
 

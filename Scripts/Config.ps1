@@ -3,8 +3,8 @@ function Import-Config {
     $defaults = @{
         Groups          = @()
         WindowSize      = [PSCustomObject]@{
-            Main       = [PSCustomObject]@{ Width = 360; Height = 200 }
-            Diagnostic = [PSCustomObject]@{ Width = 640; Height = 320 }
+            Main       = [PSCustomObject]@{ Width = 296; Height = 200 }
+            Diagnostic = [PSCustomObject]@{ Width = 560; Height = 320 }
         }
         DisplayMode     = "Full"
         Interval        = 60

@@ -18,22 +18,22 @@ function Show-MainForm {
 
     $script:console = New-RichTextBox
 
-    $diagnosticButton = New-Button -X 0 -Y 20 -Width 100 -Text "Диагностика"
-    $script:pingButton = New-Button -X 110 -Y 20 -Width 100 -Text "Пинг"
-    $settingsButton = New-Button -X 220 -Y 20 -Width 100 -Text "Настройки"
+    $diagnosticButton = New-Button -X 0 -Y 10 -Width 80 -Text "Диагностика"
+    $script:pingButton = New-Button -X 90 -Y 10 -Width 80 -Text "Пинг"
+    $settingsButton = New-Button -X 180 -Y 10 -Width 80 -Text "Настройки"
 
     $table.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
     $table.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
     $table.Controls.Add($script:console, 0, 0)
     $table.Controls.Add($panel, 0, 1)
 
-    $panel.Height = 50
+    $panel.Height = 40
     $panel.Controls.Add($diagnosticButton)
     $panel.Controls.Add($script:pingButton)
     $panel.Controls.Add($settingsButton)
 
     $mainForm.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::Sizable
-    $mainForm.MinimumSize = New-Object System.Drawing.Size(356, 200)
+    $mainForm.MinimumSize = New-Object System.Drawing.Size(296, 200)
     $mainForm.Controls.Add($table)
     $mainForm.Add_FormClosing({
         $script:config.WindowSize.Main.Width = $mainForm.Width
