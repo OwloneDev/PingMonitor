@@ -78,7 +78,6 @@ function New-ComboBox {
     $comboBox.Size = New-Object System.Drawing.Size(100, 20)
     $comboBox.DropDownStyle = "DropDownList"
     $comboBox.Items.AddRange(@("Полное", "IP-адрес", "Имя сервера"))
-
     switch ($script:config.DisplayMode) {
         'Full' { $comboBox.SelectedIndex = 0 }
         'IP' { $comboBox.SelectedIndex = 1 }
@@ -151,7 +150,6 @@ function Set-ConsoleColor {
     param($Color)
     
     Select-StartOfConsole -Console $script:console
-    
     $script:console.SelectionLength = 0
     $script:console.SelectionColor = $Color
 }
@@ -166,9 +164,7 @@ function Add-ToConsole {
     param($Text)
 
     $script:console.AppendText($Text)
-
     Select-StartOfConsole -Console $script:console
-
     $script:console.ScrollToCaret()
 }
 
@@ -184,7 +180,6 @@ function Read-DataGridView {
     param($Row, $Index)
 
     $value = $Row.Cells[$Index].Value
-
     if ($value) {
         return $value.ToString()
     }

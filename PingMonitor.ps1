@@ -12,11 +12,9 @@ function Get-ConfigFile {
 # Получить файл лога
 function Get-LogFile {
     $logDir = Join-Path -Path $PSScriptRoot -ChildPath "Logs"
-
     if (-not (Test-Path $logDir)) {
         New-Item -ItemType Directory -Path $logDir -Force | Out-Null
     }
-
     $timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
     
     return Join-Path -Path $logDir -ChildPath "log_$timestamp.txt"
@@ -51,7 +49,6 @@ function Write-Log {
         $currentDate = Get-CurrentDate
         $logLine = "$currentDate $Message"
     }
-
     Add-Content -Path $script:logFile -Value $logLine -Encoding UTF8
 }
 
@@ -60,7 +57,6 @@ function Invoke-Async {
     param($Ps)
 
     $async = $Ps.BeginInvoke()
-
     while (-not $async.IsCompleted) {
         Start-Sleep -Milliseconds 50
         [System.Windows.Forms.Application]::DoEvents()

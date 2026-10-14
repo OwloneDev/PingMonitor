@@ -33,24 +33,17 @@ function Update-PingButton {
 # Запустить пинг
 function Start-PingJob {
     if ($script:isPinging) { return }
-
     Update-PingButton -IsPinging $true
-
     [array]$serverList = Get-ServerList
     $script:console.Clear()
-
     if ($serverList.Count -eq 0) {
         Add-ToConsole -Text "Нет серверов для пинга.`n"
         Update-PingButton -IsPinging $false
         
         return
     }
-
     $currentDate = Get-CurrentDate
-
     Add-ToConsole -Text "--- $currentDate ---`n`n"
-
-    # Runspace
     $rs = [runspacefactory]::CreateRunspace()
     $rs.ApartmentState = "STA"
     $rs.Open()
@@ -62,10 +55,8 @@ function Start-PingJob {
             # Измерить длину имени
             function Measure-NameLength {
                 $max = 0
-
                 foreach ($server in $Servers) {
                     $length = $server.DisplayText.Length
-
                     if ($length -gt $max) {
                         $max = $length
                     }
@@ -82,10 +73,8 @@ function Start-PingJob {
                     if ([string]::IsNullOrWhiteSpace($ComputerName)) {
                         throw "Пустой адрес"
                     }
-
                     $ping = New-Object System.Net.NetworkInformation.Ping
                     $result = $ping.Send($ComputerName, 3000)
-
                     if ($result.Status -eq [System.Net.NetworkInformation.IPStatus]::Success) {
                         return @{ Success = $true; Color = [System.Drawing.Color]::Chartreuse; Status = "[OK]" }
                     }
@@ -103,11 +92,9 @@ function Start-PingJob {
                 $nameLength = Measure-NameLength
                 $lastGroup = $null
                 $isFirst = $true
-
                 foreach ($server in $Servers) {
                     $group = $server.Group
                     $displayText = $server.DisplayText
-
                     if ($GroupingEnabled -and -not [string]::IsNullOrWhiteSpace($group)) {
                         if ($group -ne $lastGroup) {
                             if (-not $isFirst) {
@@ -124,7 +111,6 @@ function Start-PingJob {
                             $lastGroup = $null
                         }
                     }
-                
                     $isFirst = $false
                     $paddedName = $displayText.PadRight($nameLength, ' ')
                     $NameCallback.Invoke($paddedName)
@@ -135,7 +121,6 @@ function Start-PingJob {
 
             Send-Callback
         })
-
     $groupCallback = {
         param($GroupTitle)
 
@@ -144,11 +129,9 @@ function Start-PingJob {
         Reset-ConsoleColor
         Write-Log -Message $GroupTitle
     }
-
-    $EmptyCallback = {
+    $emptyCallback = {
         Add-ToConsole -Text "`n"
     }
-
     $nameCallback = {
         param($Name)
 
@@ -156,19 +139,16 @@ function Start-PingJob {
         Add-ToConsole -Text $Name
         Set-Log -Message $Name
     }
-
     $statusCallback = {
         param($Ip, $Status, $Color)
         
         $script:serverStatuses[$Ip] = $Status
-        
         Set-ConsoleColor -Color $Color
         Add-ToConsole -Text "$Status`n"
         Reset-ConsoleColor
         Write-Log -Message "$($script:currentLog)$Status"
         Set-Log -Message ""
     }
-
     $ps.AddParameter('Servers', $serverList)
     $ps.AddParameter('GroupingEnabled', $script:config.GroupingEnabled)
     $ps.AddParameter('GroupCallback', $groupCallback)
@@ -176,7 +156,6 @@ function Start-PingJob {
     $ps.AddParameter('NameCallback', $nameCallback)
     $ps.AddParameter('StatusCallback', $statusCallback)
     $async = Invoke-Async -Ps $ps
-
     try {
         $ps.EndInvoke($async)
     }
@@ -186,7 +165,6 @@ function Start-PingJob {
     finally {
         Update-PingButton -IsPinging $false
         Write-Log -Message ""
-
         $rs.Dispose()
         $ps.Dispose()
     }

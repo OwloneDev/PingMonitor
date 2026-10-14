@@ -7,19 +7,16 @@ function Show-DiagnosticForm {
             param($Title, $Servers, $Color)
 
             if ($Servers.Count -eq 0) { return }
-
             $groupNode = New-Object System.Windows.Forms.TreeNode($Title)
             $groupNode.ForeColor = $Color
             $groupNode.NodeFont = New-Object System.Drawing.Font("Consolas", 10, [System.Drawing.FontStyle]::Bold)
             [void]$serversTree.Nodes.Add($groupNode)
-
             foreach ($server in $Servers) {
                 $childNode = New-Object System.Windows.Forms.TreeNode($server.DisplayText)
                 $childNode.Tag = $server
                 $childNode.ForeColor = $Color
                 [void]$groupNode.Nodes.Add($childNode)
             }
-
             $groupNode.Expand()
         }
 
@@ -28,10 +25,8 @@ function Show-DiagnosticForm {
         $failServers = @()
         $okServers = @()
         $unknownServers = @()
-
         foreach ($server in $serverList) {
             $status = $script:serverStatuses[$server.IP]
-
             switch ($status) {
                 "[ERR]" { $errorServers += $server }
                 "[FAIL]" { $failServers += $server }
@@ -39,7 +34,6 @@ function Show-DiagnosticForm {
                 default { $unknownServers += $server }
             }
         }
-
         Add-ServerGroup -Title "[ERROR]" -Servers $errorServers -Color ([System.Drawing.Color]::Crimson)
         Add-ServerGroup -Title "[FAIL]" -Servers $failServers -Color ([System.Drawing.Color]::Red)
         Add-ServerGroup -Title "[OK]" -Servers $okServers -Color ([System.Drawing.Color]::Chartreuse)
@@ -51,19 +45,16 @@ function Show-DiagnosticForm {
         param($Text, $Color = [System.Drawing.Color]::White)
         
         Select-StartOfConsole -Console $diagnosticConsole
-        
         $diagnosticConsole.SelectionLength = 0
         $diagnosticConsole.SelectionColor = $Color
         $diagnosticConsole.AppendText("$Text`n")
         $diagnosticConsole.ScrollToCaret()
-
         Write-Log -Message $Text
     }
 
     # Получить выбранный сервер
     function Get-SelectedServer {
         $node = $serversTree.SelectedNode
-
         if ($null -ne $node -and $null -ne $node.Tag) {
             return $node.Tag
         }
@@ -74,15 +65,11 @@ function Show-DiagnosticForm {
     # Запустить сбор информации о сервере
     function Start-ServerInfo {
         $server = Get-SelectedServer
-
         if ($null -eq $server) { return }
-
         $currentIP = $server.IP
         $diagnosticConsole.Clear()
-
         Add-ToDiagnosticConsole -Text "Имя: $($server.Name)"
         Add-ToDiagnosticConsole -Text "IP-адрес: $($server.IP)"
-
         $rs = [runspacefactory]::CreateRunspace()
         $rs.ApartmentState = "STA"
         $rs.Open()
@@ -95,7 +82,6 @@ function Show-DiagnosticForm {
                 function Get-DefaultGateway {
                     try {
                         $route = Get-NetRoute -DestinationPrefix '0.0.0.0/0' -ErrorAction Stop | Sort-Object -Property RouteMetric | Select-Object -First 1
-
                         if ($route) {
                             return $route.NextHop
                         }
@@ -103,10 +89,8 @@ function Show-DiagnosticForm {
                     catch {
                         $output = route print 0.0.0.0
                         $line = $output -split "`n" | Where-Object { $_ -match '0.0.0.0' } | Select-Object -First 1
-
                         if ($line) {
                             $parts = $line -split '\s+'
-
                             if ($parts.Count -ge 3) {
                                 return $parts[3]
                             }
@@ -122,10 +106,8 @@ function Show-DiagnosticForm {
 
                     try {
                         $output = arp -a 2>$null
-
                         foreach ($line in $output) {
                             $line = $line.Trim()
-
                             if ($line -match '^(\d+\.\d+\.\d+\.\d+)\s+(([0-9A-Fa-f]{2}[-:]{5}[0-9A-Fa-f]{2})\s+') {
                                 if ($Matches[1] -eq $IpAddress) {
                                     return $Matches[2]
@@ -168,27 +150,21 @@ function Show-DiagnosticForm {
 
                 $info = @()
                 $gateway = Get-DefaultGateway
-
                 if ($gateway) {
                     $info += "Шлюз: $gateway"
                 }
-
                 $mac = Get-MacAddress -IPAddress $Ip
-
                 if ($mac) {
                     $info += "MAC-адрес: $mac"
                 }
-
                 if ($Ip -notmatch '^\d+\.\d+\.\d+\.\d+$') {
                     $dns = Resolve-HostName -HostName $Ip
-
                     if ($dns) {
                         $info += "DNS: $dns"
                     }
                 }
                 else {
                     $hostName = Resolve-IpAddress -IPAddress $Ip
-
                     if ($hostName) {
                         $info += "Имя хоста: $hostName"
                     }
@@ -196,14 +172,11 @@ function Show-DiagnosticForm {
 
                 return $info
             })
-
         $ps.AddParameter('Ip', $server.IP)
         $async = Invoke-Async -Ps $ps
-
         try {
             $infoLines = $ps.EndInvoke($async)
             $selected = Get-SelectedServer
-
             if ($null -ne $selected -and $selected.IP -eq $currentIP) {
                 foreach ($line in $infoLines) {
                     Add-ToDiagnosticConsole -Text "$line"
@@ -223,31 +196,23 @@ function Show-DiagnosticForm {
     # Запустить пинг диагностики
     function Start-DiagnosticPing {
         if ($script:isDiagnosticPinging) { return }
-
         $server = Get-SelectedServer
-
         if ($null -eq $server) { return }
-
         Add-ToDiagnosticConsole -Text "Обмен пакетами с $($server.IP) по с 32 байтами данных:"
-
         $pingButton.Text = "Стоп"
         $script:isDiagnosticPinging = $true
         $script:diagnosticCts = New-Object System.Threading.CancellationTokenSource
-
         $outputCallback = {
             param($Txt, $Clr)
 
             Add-ToDiagnosticConsole -Text $Txt -Color $Clr
         }
-
         $completedCallback = {
             Add-ToDiagnosticConsole -Text "`n"
-
             $pingButton.Text = "Пинг"
             $script:isDiagnosticPinging = $false
             $script:diagnosticCts = $null
         }
-
         $rs = [runspacefactory]::CreateRunspace()
         $rs.ApartmentState = "STA"
         $rs.Open()
@@ -260,7 +225,6 @@ function Show-DiagnosticForm {
                 $successCount = 0
                 $totalCount = 0
                 $cancelled = $false
-
                 try {
                     while ($true) {
                         if ($Token.IsCancellationRequested) {
@@ -271,7 +235,6 @@ function Show-DiagnosticForm {
                         try {
                             $reply = $ping.Send($Ip, 3000)
                             $totalCount++
-
                             if ($reply.Status -eq [System.Net.NetworkInformation.IPStatus]::Success) {
                                 $successCount++
                                 $rtt = $reply.RoundtripTime
@@ -288,12 +251,10 @@ function Show-DiagnosticForm {
                             $line = "Ошибка: $($_.Exception.Message)"
                             $color = [System.Drawing.Color]::Crimson
                         }
-
                         $DiagnosticConsole.BeginInvoke([Action[string, System.Drawing.Color]] {
                                 param($Txt, $Clr)
                                 & $OutputCallback $Txt $Clr
                             }, $line, $color) | Out-Null
-
                         if (-not $IsInfinity -and $totalCount -ge 4) { break }
                         for ($i = 0; $i -lt 10; $i++) {
                             Start-Sleep -Milliseconds 100
@@ -305,7 +266,6 @@ function Show-DiagnosticForm {
                         }
                         if ($cancelled) { break }
                     }
-
                     if (-not $IsInfinity -and -not $cancelled) {
                         $lostCount = $totalCount - $successCount
                         $lossPercent = if ($totalCount -gt 0) {
@@ -319,7 +279,6 @@ function Show-DiagnosticForm {
                             "    Пакетов: отправлено = $totalCount, получено = $successCount, потеряно = $lostCount",
                             "    ($lossPercent% потерь)"
                         )
-
                         foreach ($text in $stats) {
                             $DiagnosticConsole.BeginInvoke([Action[string]] {
                                     param($Txt)
@@ -337,7 +296,6 @@ function Show-DiagnosticForm {
                     $ps.Dispose()
                 }
             })
-
         $ps.AddParameter('Ip', $server.IP)
         $ps.AddParameter('DiagnosticConsole', $diagnosticConsole)
         $ps.AddParameter('OutputCallback', $outputCallback)
@@ -356,23 +314,16 @@ function Show-DiagnosticForm {
 
     [array]$serverList = Get-ServerList
     $size = $script:config.WindowSize.Diagnostic
-
     $diagnosticForm = New-Form -Width $size.Width -Height $size.Height -Title "Диагностика серверов"
-
     $diagnosticPanel = New-Panel -Dock ([System.Windows.Forms.DockStyle]::Fill)
     $serversPanel = New-Panel -Dock ([System.Windows.Forms.DockStyle]::Left)
     $bottomPanel = New-Panel -Dock ([System.Windows.Forms.DockStyle]::Bottom)
-
     $diagnosticConsole = New-RichTextBox
-
     $serversTree = New-TreeView
-
     $infinityCheckBox = New-CheckBox -X 10 -Y 10 -Width 100 -Height 30 -Text "Бесконечный"
-
     $pingButton = New-Button -X 115 -Y 10 -Width 90 -Text "Пинг"
     $clearButton = New-Button -X 210 -Y 10 -Width 90 -Text "Очистить"
     $closeButton = New-Button -X 305 -Y 10 -Width 90 -Text "Закрыть"
-
     $serversTree.Add_BeforeSelect({
             param($s, $e)
 
@@ -385,9 +336,7 @@ function Show-DiagnosticForm {
                 Start-ServerInfo
             }
         })
-
     $infinityCheckBox.Checked = $false
-
     $diagnosticPanel.Controls.Add($diagnosticConsole)
     $serversPanel.Width = 200
     $serversPanel.Controls.Add($serversTree)
@@ -396,7 +345,6 @@ function Show-DiagnosticForm {
     $bottomPanel.Controls.Add($pingButton)
     $bottomPanel.Controls.Add($clearButton)
     $bottomPanel.Controls.Add($closeButton)
-
     $diagnosticForm.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::Sizable
     $diagnosticForm.MinimumSize = New-Object System.Drawing.Size(560, 320)
     $diagnosticForm.MinimizeBox = $false
@@ -408,10 +356,8 @@ function Show-DiagnosticForm {
     $diagnosticForm.Add_FormClosing({
             $script:config.WindowSize.Diagnostic.Width = $diagnosticForm.Width
             $script:config.WindowSize.Diagnostic.Height = $diagnosticForm.Height
-
             Export-Config
         })
-
     $pingButton.Add_Click({
             if ($script:isDiagnosticPinging) {
                 Stop-DiagnosticPing
@@ -428,11 +374,8 @@ function Show-DiagnosticForm {
                 Stop-DiagnosticPing
                 Start-Sleep -Milliseconds 100
             }
-            
             $diagnosticForm.Close()
         })
-
     Add-ToServerList
-
     [void]$diagnosticForm.ShowDialog()
 }

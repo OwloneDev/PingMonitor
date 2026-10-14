@@ -11,12 +11,10 @@ function Import-Config {
         FontSize        = 10
         GroupingEnabled = $true
         LoggingEnabled  = $false
-    }
-            
+    } 
     if (Test-Path $script:configFile) {
         try {
             $script:config = Get-Content $script:configFile -Raw | ConvertFrom-Json
-
             foreach ($key in $defaults.Keys) {
                 if ($null -eq $script:config.$key) {
                     $script:config | Add-Member -NotePropertyName $key -NotePropertyValue $defaults[$key]
@@ -40,7 +38,6 @@ function Import-Config {
             GroupingEnabled = $defaults.GroupingEnabled
             LoggingEnabled  = $defaults.LoggingEnabled
         }
-
         Export-Config
     }
 }
