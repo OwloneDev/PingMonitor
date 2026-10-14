@@ -209,9 +209,7 @@ function Show-DiagnosticForm {
         }
         $completedCallback = {
             Add-ToDiagnosticConsole -Text "`n"
-            $pingButton.Text = "Пинг"
-            $script:isDiagnosticPinging = $false
-            $script:diagnosticCts = $null
+            Complete-Diagnostic
         }
         $rs = [runspacefactory]::CreateRunspace()
         $rs.ApartmentState = "STA"
@@ -229,6 +227,7 @@ function Show-DiagnosticForm {
                     while ($true) {
                         if ($Token.IsCancellationRequested) {
                             $cancelled = $true
+                            $CompletedCallback.Invoke()
 
                             break
                         }
@@ -260,6 +259,7 @@ function Show-DiagnosticForm {
                             Start-Sleep -Milliseconds 100
                             if ($Token.IsCancellationRequested) {
                                 $cancelled = $true
+                                $CompletedCallback.Invoke()
 
                                 break
                             }
@@ -310,6 +310,14 @@ function Show-DiagnosticForm {
         if ($null -ne $script:diagnosticCts) {
             $script:diagnosticCts.Cancel()
         }
+        Complete-Diagnostic
+    }
+
+    # Завершить диагностику
+    function Complete-Diagnostic {
+        $pingButton.Text = "Пинг"
+        $script:isDiagnosticPinging = $false
+        $script:diagnosticCts = $null
     }
 
     [array]$serverList = Get-ServerList

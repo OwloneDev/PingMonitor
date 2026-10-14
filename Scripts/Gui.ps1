@@ -14,10 +14,10 @@ function New-Form {
 # Создать таблицу
 function New-Table {
     $table = New-Object System.Windows.Forms.TableLayoutPanel
+    $table.Padding = New-Object System.Windows.Forms.Padding(7)
     $table.Dock = [System.Windows.Forms.DockStyle]::Fill
     $table.ColumnCount = 1
     $table.RowCount = 2
-    $table.Padding = New-Object System.Windows.Forms.Padding(7)
 
     return $table
 }
@@ -47,11 +47,11 @@ function New-Label {
 # Создать расширенное текстовое поле
 function New-RichTextBox {
     $richTextBox = New-Object System.Windows.Forms.RichTextBox
+    $richTextBox.Font = New-Object System.Drawing.Font("Consolas", $script:config.FontSize)
     $richTextBox.Dock = [System.Windows.Forms.DockStyle]::Fill
     $richTextBox.ScrollBars = [System.Windows.Forms.RichTextBoxScrollBars]::Vertical
     $richTextBox.BackColor = [System.Drawing.Color]::Black
     $richTextBox.ForeColor = [System.Drawing.Color]::White
-    $richTextBox.Font = New-Object System.Drawing.Font("Consolas", $script:config.FontSize)
     $richTextBox.ReadOnly = $true
     $richTextBox.WordWrap = $false
     $richTextBox.AutoSize = $false
@@ -116,13 +116,13 @@ function New-CheckBox {
 # Создать дерево
 function New-TreeView {
     $treeView = New-Object System.Windows.Forms.TreeView
-    $treeView.Dock = [System.Windows.Forms.DockStyle]::Fill
     $treeView.Font = New-Object System.Drawing.Font("Consolas", 10)
+    $treeView.Dock = [System.Windows.Forms.DockStyle]::Fill
     $treeView.BackColor = [System.Drawing.Color]::Black
     $treeView.ForeColor = [System.Drawing.Color]::White
     $treeView.HideSelection = $false
-    $treeView.ShowLines = $false
     $treeView.ShowRootLines = $false
+    $treeView.ShowLines = $true
     $treeView.ShowPlusMinus = $true
     $treeView.FullRowSelect = $true
 
@@ -143,6 +143,13 @@ function New-DataGridView {
     $dataGridView.AutoSizeColumnsMode = "Fill"
     
     return $dataGridView
+}
+
+# Создать ручку
+function New-Pen {
+    $pen = New-Object System.Drawing.Pen ([System.Drawing.Color]::DodgerBlue), 6
+
+    return $pen
 }
 
 # Установить цвет текста консоли
@@ -175,7 +182,7 @@ function Select-StartOfConsole {
     $Console.SelectionStart = $Console.TextLength
 }
 
-# Читать из таблицы даных
+# Читать таблицу даных
 function Read-DataGridView {
     param($Row, $Index)
 

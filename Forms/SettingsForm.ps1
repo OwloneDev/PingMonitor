@@ -29,7 +29,7 @@ function Show-SettingsForm {
         }
     }
 
-    # Обновить выпадающий список групп в столбце «Группа»
+    # Обновить выпадающий список групп
     function Update-GroupColumn {
         if ($null -eq $script:settingsGroupColumn) { return }
         $currentValues = @()
@@ -68,14 +68,13 @@ function Show-SettingsForm {
         $serverDataGridView.Add_MouseDown({
                 param($s, $e)
 
-                if ($e.Button -eq [System.Windows.Forms.MouseButtons]::Left) {
-                    $hit = $s.HitTest($e.X, $e.Y)
-                    if ($hit.Type -eq [System.Windows.Forms.DataGridViewHitTestType]::RowHeader) {
-                        $script:dragRowIndex = $hit.RowIndex
-                    }
-                    else {
-                        $script:dragRowIndex = -1
-                    }
+                if ($e.Button -ne [System.Windows.Forms.MouseButtons]::Left) { return }
+                $hit = $s.HitTest($e.X, $e.Y)
+                if ($hit.Type -eq [System.Windows.Forms.DataGridViewHitTestType]::RowHeader) {
+                    $script:dragRowIndex = $hit.RowIndex
+                }
+                else {
+                    $script:dragRowIndex = -1
                 }
             })
         $serverDataGridView.Add_MouseMove({
@@ -155,7 +154,7 @@ function Show-SettingsForm {
 
                 if ($script:dragInsertIndex -ge 0 -and $e.RowIndex -eq $script:dragInsertIndex) {
                     $graphics = $e.Graphics
-                    $pen = New-Object System.Drawing.Pen ([System.Drawing.Color]::DodgerBlue), 6
+                    $pen = New-Pen
                     $y = if ($script:dragInsertSide -eq "Top") {
                         $e.CellBounds.Top + 1
                     }

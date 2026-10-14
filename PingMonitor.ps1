@@ -16,7 +16,7 @@ function Get-LogFile {
         New-Item -ItemType Directory -Path $logDir -Force | Out-Null
     }
     $timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
-    
+
     return Join-Path -Path $logDir -ChildPath "log_$timestamp.txt"
 }
 

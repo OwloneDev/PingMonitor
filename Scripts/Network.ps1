@@ -3,7 +3,6 @@ function Get-ServerDisplayText {
     param($Server)
 
     switch ($script:config.DisplayMode) {
-        'Full' { return "$($Server.Name) ($($Server.IP))" }
         'IP' { return $Server.IP }
         'Name' { return $Server.Name }
         default { return "$($Server.Name) ($($Server.IP))" }
@@ -105,11 +104,9 @@ function Start-PingJob {
                         }
                         $displayText = "  " + $displayText
                     }
-                    else {
-                        if (-not $isFirst -and $null -ne $lastGroup) {
-                            $EmptyCallback.Invoke()
-                            $lastGroup = $null
-                        }
+                    elseif (-not $isFirst -and $null -ne $lastGroup) {
+                        $EmptyCallback.Invoke()
+                        $lastGroup = $null
                     }
                     $isFirst = $false
                     $paddedName = $displayText.PadRight($nameLength, ' ')
@@ -143,10 +140,11 @@ function Start-PingJob {
         param($Ip, $Status, $Color)
         
         $script:serverStatuses[$Ip] = $Status
+        $paddedStatus = $Status.PadLeft(6, ' ')
         Set-ConsoleColor -Color $Color
-        Add-ToConsole -Text "$Status`n"
+        Add-ToConsole -Text "$paddedStatus`n"
         Reset-ConsoleColor
-        Write-Log -Message "$($script:currentLog)$Status"
+        Write-Log -Message "$($script:currentLog)$paddedStatus"
         Set-Log -Message ""
     }
     $ps.AddParameter('Servers', $serverList)

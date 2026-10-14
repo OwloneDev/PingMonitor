@@ -28,8 +28,12 @@ function Show-GroupsForm {
     if ($groupsForm.ShowDialog() -eq "OK") {
         $newGroups = @()
         foreach ($row in $groupDataGridView.Rows) {
-            if ($row.Cells[0].Value -and $row.Cells[0].Value.ToString().Trim() -ne "") {
-                $newGroups += $row.Cells[0].Value.ToString().Trim()
+            $value = $row.Cells[0].Value
+            if ($value) {
+                $group = $value.ToString().Trim()
+                if ($group -ne "") {
+                    $newGroups += $group
+                }
             }
         }
         $script:config.Groups = $newGroups

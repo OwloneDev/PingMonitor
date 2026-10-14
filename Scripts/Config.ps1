@@ -11,7 +11,7 @@ function Import-Config {
         FontSize        = 10
         GroupingEnabled = $true
         LoggingEnabled  = $false
-    } 
+    }
     if (Test-Path $script:configFile) {
         try {
             $script:config = Get-Content $script:configFile -Raw | ConvertFrom-Json
