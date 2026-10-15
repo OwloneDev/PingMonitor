@@ -1,4 +1,11 @@
-﻿# Импортировать конфигурацию
+﻿# Config.ps1
+
+# Прочитать файл конфигурации
+function Read-ConfigFile {
+    $script:configFile = Join-Path $script:root "config.json"
+}
+
+# Импортировать конфигурацию
 function Import-Config {
     $defaults = @{
         Groups          = @()

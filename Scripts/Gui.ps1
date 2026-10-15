@@ -1,4 +1,6 @@
-﻿# Создать форму
+﻿# Gui.ps1
+
+# Создать форму
 function New-Form {
     param($Width, $Height, $Title)
 
@@ -145,34 +147,44 @@ function New-DataGridView {
     return $dataGridView
 }
 
+# Создать подсказку
+function New-ToolTip {
+    $toolTip = New-Object System.Windows.Forms.ToolTip
+    $toolTip.AutoPopDelay = 10000
+    $toolTip.InitialDelay = 300
+    $toolTip.ReshowDelay = 100
+
+    return $toolTip
+}
+
 # Создать ручку
 function New-Pen {
-    $pen = New-Object System.Drawing.Pen ([System.Drawing.Color]::DodgerBlue), 6
+    param($Color, $Width)
+
+    $pen = New-Object System.Drawing.Pen $Color, $Width
 
     return $pen
 }
 
-# Установить цвет текста консоли
-function Set-ConsoleColor {
-    param($Color)
-    
-    Select-StartOfConsole -Console $script:console
-    $script:console.SelectionLength = 0
-    $script:console.SelectionColor = $Color
-}
+# Создать иконку статуса
+function New-StatusIcon {
+    param($Graphics, $X, $Y, $Size, $Status)
 
-# Сбросить цвет текста консоли
-function Reset-ConsoleColor {
-    $script:console.SelectionColor = [System.Drawing.Color]::White
-}
-
-# Добавить текст в консоль
-function Add-ToConsole {
-    param($Text)
-
-    $script:console.AppendText($Text)
-    Select-StartOfConsole -Console $script:console
-    $script:console.ScrollToCaret()
+    $colors = @{
+        "[OK]"   = [System.Drawing.Color]::LimeGreen
+        "[FAIL]" = [System.Drawing.Color]::Red
+        "[ERR]"  = [System.Drawing.Color]::Crimson
+    }
+    $color = if (-not [string]::IsNullOrEmpty($Status) -and $colors.ContainsKey($Status)) {
+        $colors[$Status]
+    }
+    else {
+        [System.Drawing.Color]::Gray
+    }
+    $brush = [System.Drawing.SolidBrush]::new($color)
+    $m = $Size * 0.25
+    $Graphics.FillEllipse($brush, $X + $m, $Y + $m, $Size - 2 * $m, $Size - 2 * $m)
+    $brush.Dispose()
 }
 
 # Выбрать начало консоли

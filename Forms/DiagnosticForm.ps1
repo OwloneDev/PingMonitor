@@ -1,4 +1,6 @@
-﻿# Показать форму диагностики
+﻿# DiagnosticForm.ps1
+
+# Показать форму диагностики
 function Show-DiagnosticForm {
     # Добавить в список серверов
     function Add-ToServerList {
@@ -34,7 +36,7 @@ function Show-DiagnosticForm {
                 default { $unknownServers += $server }
             }
         }
-        Add-ServerGroup -Title "[ERROR]" -Servers $errorServers -Color ([System.Drawing.Color]::Crimson)
+        Add-ServerGroup -Title "[ERR]" -Servers $errorServers -Color ([System.Drawing.Color]::Crimson)
         Add-ServerGroup -Title "[FAIL]" -Servers $failServers -Color ([System.Drawing.Color]::Red)
         Add-ServerGroup -Title "[OK]" -Servers $okServers -Color ([System.Drawing.Color]::Chartreuse)
         Add-ServerGroup -Title "[UNKNOWN]" -Servers $unknownServers -Color ([System.Drawing.Color]::White)
@@ -49,7 +51,6 @@ function Show-DiagnosticForm {
         $diagnosticConsole.SelectionColor = $Color
         $diagnosticConsole.AppendText("$Text`n")
         $diagnosticConsole.ScrollToCaret()
-        Write-Log -Message $Text
     }
 
     # Получить выбранный сервер
@@ -227,7 +228,6 @@ function Show-DiagnosticForm {
                     while ($true) {
                         if ($Token.IsCancellationRequested) {
                             $cancelled = $true
-                            $CompletedCallback.Invoke()
 
                             break
                         }
@@ -259,7 +259,6 @@ function Show-DiagnosticForm {
                             Start-Sleep -Milliseconds 100
                             if ($Token.IsCancellationRequested) {
                                 $cancelled = $true
-                                $CompletedCallback.Invoke()
 
                                 break
                             }
@@ -292,8 +291,6 @@ function Show-DiagnosticForm {
                             & $CompletedCallback
                         }) | Out-Null
                     $ping.Dispose()
-                    $rs.Dispose()
-                    $ps.Dispose()
                 }
             })
         $ps.AddParameter('Ip', $server.IP)
@@ -310,7 +307,6 @@ function Show-DiagnosticForm {
         if ($null -ne $script:diagnosticCts) {
             $script:diagnosticCts.Cancel()
         }
-        Complete-Diagnostic
     }
 
     # Завершить диагностику

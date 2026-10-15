@@ -1,4 +1,6 @@
-﻿# Получить отображаемый текст сервера
+﻿# Network.ps1
+
+# Получить отображаемый текст сервера
 function Get-ServerDisplayText {
     param($Server)
 
@@ -32,130 +34,78 @@ function Update-PingButton {
 # Запустить пинг
 function Start-PingJob {
     if ($script:isPinging) { return }
+
     Update-PingButton -IsPinging $true
-    [array]$serverList = Get-ServerList
-    $script:console.Clear()
+
+    $serverList = Get-ServerList
+
     if ($serverList.Count -eq 0) {
-        Add-ToConsole -Text "Нет серверов для пинга.`n"
         Update-PingButton -IsPinging $false
-        
+
         return
     }
-    $currentDate = Get-CurrentDate
-    Add-ToConsole -Text "--- $currentDate ---`n`n"
+
     $rs = [runspacefactory]::CreateRunspace()
     $rs.ApartmentState = "STA"
     $rs.Open()
     $ps = [powershell]::Create()
     $ps.Runspace = $rs
     $ps.AddScript({
-            param($Servers, $GroupingEnabled, $GroupCallback, $EmptyCallback, $NameCallback, $StatusCallback)
+            param($Servers)
 
-            # Измерить длину имени
-            function Measure-NameLength {
-                $max = 0
-                foreach ($server in $Servers) {
-                    $length = $server.DisplayText.Length
-                    if ($length -gt $max) {
-                        $max = $length
-                    }
-                }
-
-                return $max + 4
-            }
-
-            # Пингануть сервер
-            function Ping-Server {
-                param([string]$ComputerName)
-
+            $ping = New-Object System.Net.NetworkInformation.Ping
+            foreach ($server in $Servers) {
                 try {
-                    if ([string]::IsNullOrWhiteSpace($ComputerName)) {
-                        throw "Пустой адрес"
-                    }
-                    $ping = New-Object System.Net.NetworkInformation.Ping
-                    $result = $ping.Send($ComputerName, 3000)
-                    if ($result.Status -eq [System.Net.NetworkInformation.IPStatus]::Success) {
-                        return @{ Success = $true; Color = [System.Drawing.Color]::Chartreuse; Status = "[OK]" }
-                    }
-                    else {
-                        return @{ Success = $false; Color = [System.Drawing.Color]::Red; Status = "[FAIL]" }
+                    $reply = $ping.Send($server.IP, 3000)
+                    $status = if ($reply.Status -eq [System.Net.NetworkInformation.IPStatus]::Success) {
+                        "[OK]"
+                    } else {
+                        "[FAIL]"
                     }
                 }
                 catch {
-                    return @{ Success = $false; Color = [System.Drawing.Color]::Crimson; Status = "[ERR]" }
+                    $status = "[ERR]"
+                }
+
+                # Каждый объект выводим отдельно — EndInvoke вернёт их потоком
+                [PSCustomObject]@{
+                    IP     = $server.IP
+                    Status = $status
+                    Time   = Get-Date
                 }
             }
-
-            # Отправить коллбэк
-            function Send-Callback {
-                $nameLength = Measure-NameLength
-                $lastGroup = $null
-                $isFirst = $true
-                foreach ($server in $Servers) {
-                    $group = $server.Group
-                    $displayText = $server.DisplayText
-                    if ($GroupingEnabled -and -not [string]::IsNullOrWhiteSpace($group)) {
-                        if ($group -ne $lastGroup) {
-                            if (-not $isFirst) {
-                                $EmptyCallback.Invoke()
-                            }
-                            $GroupCallback.Invoke($group)
-                            $lastGroup = $group
-                        }
-                        $displayText = "  " + $displayText
-                    }
-                    elseif (-not $isFirst -and $null -ne $lastGroup) {
-                        $EmptyCallback.Invoke()
-                        $lastGroup = $null
-                    }
-                    $isFirst = $false
-                    $paddedName = $displayText.PadRight($nameLength, ' ')
-                    $NameCallback.Invoke($paddedName)
-                    $res = Ping-Server -ComputerName $server.IP
-                    $StatusCallback.Invoke($server.IP, $res.Status, $res.Color)
-                }
-            }
-
-            Send-Callback
+            $ping.Dispose()
         })
-    $groupCallback = {
-        param($GroupTitle)
 
-        Set-ConsoleColor -Color ([System.Drawing.Color]::Cyan)
-        Add-ToConsole -Text "$GroupTitle`n"
-        Reset-ConsoleColor
-        Write-Log -Message $GroupTitle
-    }
-    $emptyCallback = {
-        Add-ToConsole -Text "`n"
-    }
-    $nameCallback = {
-        param($Name)
-
-        Set-ConsoleColor -Color ([System.Drawing.Color]::White)
-        Add-ToConsole -Text $Name
-        Set-Log -Message $Name
-    }
-    $statusCallback = {
-        param($Ip, $Status, $Color)
-        
-        $script:serverStatuses[$Ip] = $Status
-        $paddedStatus = $Status.PadLeft(6, ' ')
-        Set-ConsoleColor -Color $Color
-        Add-ToConsole -Text "$paddedStatus`n"
-        Reset-ConsoleColor
-        Write-Log -Message "$($script:currentLog)$paddedStatus"
-        Set-Log -Message ""
-    }
     $ps.AddParameter('Servers', $serverList)
-    $ps.AddParameter('GroupingEnabled', $script:config.GroupingEnabled)
-    $ps.AddParameter('GroupCallback', $groupCallback)
-    $ps.AddParameter('EmptyCallback', $emptyCallback)
-    $ps.AddParameter('NameCallback', $nameCallback)
-    $ps.AddParameter('StatusCallback', $statusCallback)
     $async = Invoke-Async -Ps $ps
+
     try {
-        $ps.EndInvoke($async)
+        $allResults = $ps.EndInvoke($async)
+
+        foreach ($r in $allResults) {
+            if ($null -eq $r) { continue }
+
+            $script:serverStatuses[$r.IP] = $r.Status
+
+            if (-not $script:serverHistory.ContainsKey($r.IP)) {
+                $script:serverHistory[$r.IP] = New-Object System.Collections.Generic.Queue[object]
+            }
+            $queue = $script:serverHistory[$r.IP]
+            $queue.Enqueue([PSCustomObject]@{
+                    Time   = $r.Time
+                    Status = $r.Status
+                })
+            while ($queue.Count -gt $script:historyMaxSize) {
+                [void]$queue.Dequeue()
+            }
+
+            $server = $serverList | Where-Object { $_.IP -eq $r.IP } | Select-Object -First 1
+            if ($null -ne $server) {
+                $displayText = Get-ServerDisplayText -Server $server
+                Write-Log -Message "$displayText $($r.Status)"
+            }
+        }
     }
     catch {
         Write-Log -Message "Ошибка пинга: $($_.Exception.Message)"
@@ -163,7 +113,15 @@ function Start-PingJob {
     finally {
         Update-PingButton -IsPinging $false
         Write-Log -Message ""
+
         $rs.Dispose()
         $ps.Dispose()
+
+        # Обновляем reference time и перерисовываем
+        $script:historyReferenceTime = Get-HistoryReferenceTime
+
+        if ($null -ne $script:mainDrawPanel -and -not $script:mainDrawPanel.IsDisposed) {
+            $script:mainDrawPanel.Invalidate()
+        }
     }
 }

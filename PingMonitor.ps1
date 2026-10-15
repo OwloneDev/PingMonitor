@@ -1,101 +1,57 @@
-﻿# Ping Monitor by Owlone Dev
+﻿# PingMonitor.ps1
+# by Owlone Dev
 
 # Библиотеки
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-# Получить файл конфигурации
-function Get-ConfigFile {
-    return Join-Path $PSScriptRoot "config.json"
-}
-
-# Получить файл лога
-function Get-LogFile {
-    $logDir = Join-Path -Path $PSScriptRoot -ChildPath "Logs"
-    if (-not (Test-Path $logDir)) {
-        New-Item -ItemType Directory -Path $logDir -Force | Out-Null
-    }
-    $timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
-
-    return Join-Path -Path $logDir -ChildPath "log_$timestamp.txt"
-}
-
-# Получить текущую дату
-function Get-CurrentDate {
-    return Get-Date -Format "dd.MM.yyyy HH:mm:ss"
-}
-
-# Получить интервал
-function Get-Interval {
-    return $script:config.Interval * 60000
-}
-
-# Установить лог
-function Set-Log {
-    param($Message)
-
-    $script:currentLog = $Message
-}
-
-# Записать лог
-function Write-Log {
-    param([string]$Message)
-
-    if (-not $script:config.LoggingEnabled) { return }
-    if ($Message -eq "") {
-        $logLine = ""
-    }
-    else {
-        $currentDate = Get-CurrentDate
-        $logLine = "$currentDate $Message"
-    }
-    Add-Content -Path $script:logFile -Value $logLine -Encoding UTF8
-}
-
-# Вызвать асинхронно
-function Invoke-Async {
-    param($Ps)
-
-    $async = $Ps.BeginInvoke()
-    while (-not $async.IsCompleted) {
-        Start-Sleep -Milliseconds 50
-        [System.Windows.Forms.Application]::DoEvents()
-    }
-
-    return $async
-}
-
 # Запустить программу
 function Start-App {
     [System.Windows.Forms.Application]::EnableVisualStyles()
+    Read-ConfigFile
+    Read-LogFile
     Import-Config
+    Update-HistoryReferenceTime
     Show-MainForm
 }
 
 # Глобальные переменные
-$script:configFile = Get-ConfigFile
-$script:logFile = Get-LogFile
+$script:root = $PSScriptRoot
+$script:mainServerWindowSizes = @{}
 $script:serverStatuses = @{}
+$script:serverHistory = @{}
+$script:mainLastSegMaps = @{}
+$script:mainDisplayRows = @()
+$script:configFile = $null
+$script:logFile = $null
 $script:config = $null
 $script:diagnosticCts = $null
-$script:console = $null
 $script:timer = $null
+$script:mainDrawPanel = $null
 $script:pingButton = $null
+$script:historyReferenceTime = $null
 $script:isPinging = $false
 $script:isDiagnosticPinging = $false
+$script:historyMaxSize = 60
+$script:mainLabelWidth = 200
 $script:dragRowIndex = -1
 $script:dragInsertIndex = -1
+$script:mainHoverRow = -1
+$script:mainHoverSegment = -1
 $script:dragInsertSide = "Top"
-$script:currentLog = ""
-$script:version = "v1.0.5"
+$script:version = "v1.1.0"
 
-# Cкрипты
+# Скрипты
 . "$PSScriptRoot\Forms\DiagnosticForm.ps1"
 . "$PSScriptRoot\Forms\GroupsForm.ps1"
 . "$PSScriptRoot\Forms\MainForm.ps1"
 . "$PSScriptRoot\Forms\SettingsForm.ps1"
+. "$PSScriptRoot\Scripts\Async.ps1"
 . "$PSScriptRoot\Scripts\Config.ps1"
 . "$PSScriptRoot\Scripts\Gui.ps1"
+. "$PSScriptRoot\Scripts\History.ps1"
+. "$PSScriptRoot\Scripts\Log.ps1"
 . "$PSScriptRoot\Scripts\Network.ps1"
+. "$PSScriptRoot\Scripts\Timer.ps1"
 
 Start-App

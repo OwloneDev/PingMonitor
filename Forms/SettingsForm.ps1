@@ -1,4 +1,6 @@
-﻿# Показать форму настроек
+﻿# SettingsForm.ps1
+
+# Показать форму настроек
 function Show-SettingsForm {
     # Добавить данные серверов
     function Add-ServersData {
@@ -9,7 +11,7 @@ function Show-SettingsForm {
         $groupColumn.HeaderText = "Группа"
         $groupColumn.FlatStyle = [System.Windows.Forms.FlatStyle]::Flat
         $groupColumn.Items.Add("") | Out-Null
-        foreach ($group in $groups) {
+        foreach ($group in $script:config.Groups) {
             $groupColumn.Items.Add($group) | Out-Null
         }
         $serverDataGridView.Columns.Add("Name", "Имя сервера")
@@ -154,7 +156,7 @@ function Show-SettingsForm {
 
                 if ($script:dragInsertIndex -ge 0 -and $e.RowIndex -eq $script:dragInsertIndex) {
                     $graphics = $e.Graphics
-                    $pen = New-Pen
+                    $pen = New-Pen -Color ([System.Drawing.Color]::DodgerBlue) -Width 6
                     $y = if ($script:dragInsertSide -eq "Top") {
                         $e.CellBounds.Top + 1
                     }
@@ -176,8 +178,8 @@ function Show-SettingsForm {
     $okButton = New-Button -X 204 -Y 331 -Width 80 -Text "OK"
     $cancelButton = New-Button -X 294 -Y 331 -Width 80 -Text "Отмена"
     $displayComboBox = New-ComboBox
-    $intervalNumericUpDown = New-NumericUpDown -X 140 -Y 230 -Min 1 -Max 999 -Value $script:config.Interval
-    $fontSizeNumericUpDown = New-NumericUpDown -X 140 -Y 260 -Min 8 -Max 20 -Value $script:config.FontSize
+    $intervalNumericUpDown = New-NumericUpDown -X 140 -Y 230 -Min 1 -Max 60 -Value $script:config.Interval
+    $fontSizeNumericUpDown = New-NumericUpDown -X 140 -Y 260 -Min 8 -Max 14 -Value $script:config.FontSize
     $loggingCheckBox = New-CheckBox -X 10 -Y 290 -Width 180 -Height 20 -Text "Вести запись в журнал"
     $serverDataGridView = New-DataGridView -Width 364
     $displayLabel.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
@@ -228,14 +230,13 @@ function Show-SettingsForm {
         $script:config.Interval = [int]$intervalNumericUpDown.Value
         $script:config.FontSize = [int]$fontSizeNumericUpDown.Value
         $script:config.LoggingEnabled = $loggingCheckBox.Checked
-        $script:timer.Interval = Get-Interval
-        $script:console.Font = New-Object System.Drawing.Font("Consolas", $script:config.FontSize)
         switch ($displayComboBox.SelectedIndex) {
             0 { $script:config.DisplayMode = 'Full' }
             1 { $script:config.DisplayMode = 'IP' }
             2 { $script:config.DisplayMode = 'Name' }
         }
         Export-Config
+        Update-Interval
         Start-PingJob
     }
 }

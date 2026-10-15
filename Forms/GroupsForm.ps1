@@ -1,4 +1,6 @@
-﻿# Показать форму групп
+﻿# GroupsForm.ps1
+
+# Показать форму групп
 function Show-GroupsForm {
     # Добавить данные групп
     function Add-GroupsData {
