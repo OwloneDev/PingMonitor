@@ -5,17 +5,6 @@
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-# Запустить программу
-function Start-App {
-    [System.Windows.Forms.Application]::EnableVisualStyles()
-    Read-ConfigFile
-    Read-LogFile
-    Import-Config
-    Read-HistoryFile
-    Update-HistoryReferenceTime
-    Show-MainForm
-}
-
 # Глобальные переменные
 $script:root = $PSScriptRoot
 $script:mainServerWindowSizes = @{}
@@ -42,7 +31,7 @@ $script:dragInsertIndex = -1
 $script:mainHoverRow = -1
 $script:mainHoverSegment = -1
 $script:dragInsertSide = "Top"
-$script:version = "v1.1.3"
+$script:version = "v1.1.4"
 
 # Скрипты
 . "$PSScriptRoot\Forms\DiagnosticForm.ps1"
@@ -57,5 +46,16 @@ $script:version = "v1.1.3"
 . "$PSScriptRoot\Scripts\Network.ps1"
 . "$PSScriptRoot\Scripts\Snapper.ps1"
 . "$PSScriptRoot\Scripts\Timer.ps1"
+
+# Запустить программу
+function Start-App {
+    [System.Windows.Forms.Application]::EnableVisualStyles()
+    Read-ConfigFile
+    Read-LogFile
+    Import-Config
+    Read-HistoryFile
+    Update-HistoryReferenceTime
+    Show-MainForm
+}
 
 Start-App
