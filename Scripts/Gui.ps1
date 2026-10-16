@@ -197,6 +197,27 @@ function New-StatusIcon {
     $brush.Dispose()
 }
 
+# Сместить форму
+function Move-Form {
+    param($Form, $Size)
+
+    if ($null -ne $Size.X -and $null -ne $Size.Y) {
+        $testRect = New-Object System.Drawing.Rectangle($Size.X, $Size.Y, $Size.Width, $Size.Height)
+        $isVisible = $false
+        foreach ($screen in [System.Windows.Forms.Screen]::AllScreens) {
+            if ($screen.WorkingArea.IntersectsWith($testRect)) {
+                $isVisible = $true
+
+                break
+            }
+        }
+        if ($isVisible) {
+            $Form.StartPosition = [System.Windows.Forms.FormStartPosition]::Manual
+            $Form.Location = New-Object System.Drawing.Point($Size.X, $Size.Y)
+        }
+    }
+}
+
 # Выбрать начало консоли
 function Select-StartOfConsole {
     param($Console)

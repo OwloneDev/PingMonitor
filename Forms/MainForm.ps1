@@ -12,6 +12,7 @@ function Show-MainForm {
     $script:pingButton = New-Button -X 110 -Y 20 -Width 100 -Text "Пинг"
     $settingsButton = New-Button -X 220 -Y 20 -Width 100 -Text "Настройки"
     $toolTip = New-ToolTip
+    $script:mainLastBounds = New-Object System.Drawing.Rectangle($mainForm.Location, $mainForm.Size)
     $mainForm.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::Sizable
     $mainForm.MinimumSize = New-Object System.Drawing.Size(356, 200)
     $dbProp = [System.Windows.Forms.Control].GetProperty("DoubleBuffered",
@@ -28,11 +29,28 @@ function Show-MainForm {
     $script:mainDrawPanel.BackColor = [System.Drawing.Color]::Black
     $script:mainDrawPanel.AutoScroll = $true
     $mainForm.Controls.Add($table)
+    $mainForm.Add_Move({
+            if ($mainForm.WindowState -eq [System.Windows.Forms.FormWindowState]::Normal) {
+                $script:mainLastBounds = New-Object System.Drawing.Rectangle($mainForm.Location, $mainForm.Size)
+            }
+        })
+    $mainForm.Add_Resize({
+            if ($mainForm.WindowState -eq [System.Windows.Forms.FormWindowState]::Normal) {
+                $script:mainLastBounds = New-Object System.Drawing.Rectangle($mainForm.Location, $mainForm.Size)
+            }
+        })
     $mainForm.Add_FormClosing({
-            $script:config.WindowSize.Main.Width = $mainForm.Width
-            $script:config.WindowSize.Main.Height = $mainForm.Height
+            if ($null -ne $script:mainLastBounds) {
+                $script:config.WindowSize.Main.Width = $script:mainLastBounds.Width
+                $script:config.WindowSize.Main.Height = $script:mainLastBounds.Height
+                $script:config.WindowSize.Main.X = $script:mainLastBounds.X
+                $script:config.WindowSize.Main.Y = $script:mainLastBounds.Y
+            }
             Stop-Timer
             Export-Config
+        })
+    $mainForm.Add_HandleCreated({
+            $script:mainSnapper = [WindowSnapper]::new($mainForm.Handle)
         })
     $mainForm.AcceptButton = $script:pingButton
     $diagnosticButton.Add_Click({ Show-DiagnosticForm })
@@ -256,6 +274,7 @@ function Show-MainForm {
             $script:mainHoverSegment = -1
             $script:mainDrawPanel.Invalidate()
         })
+    Move-Form -Form $mainForm -Size $size
     Start-Timer
     [System.Windows.Forms.Application]::Run($mainForm)
 }
