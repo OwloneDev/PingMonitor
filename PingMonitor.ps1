@@ -31,6 +31,7 @@ $script:timer = $null
 $script:mainDrawPanel = $null
 $script:pingButton = $null
 $script:historyReferenceTime = $null
+$script:currentPingStartTime = $null
 $script:isPinging = $false
 $script:isDiagnosticPinging = $false
 $script:mainLabelWidth = 200
@@ -39,7 +40,7 @@ $script:dragInsertIndex = -1
 $script:mainHoverRow = -1
 $script:mainHoverSegment = -1
 $script:dragInsertSide = "Top"
-$script:version = "v1.1.1"
+$script:version = "v1.1.2"
 
 # Скрипты
 . "$PSScriptRoot\Forms\DiagnosticForm.ps1"

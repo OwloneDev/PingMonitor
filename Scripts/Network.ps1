@@ -41,13 +41,65 @@ function Start-PingJob {
 
         return
     }
+    $startTime = Get-Date
+    $script:currentPingStartTime = $startTime
+    foreach ($server in $serverList) {
+        if (-not $script:serverHistory.ContainsKey($server.IP)) {
+            $script:serverHistory[$server.IP] = New-Object System.Collections.Generic.Queue[object]
+        }
+        $queue = $script:serverHistory[$server.IP]
+        $queue.Enqueue([PSCustomObject]@{
+                Time   = $startTime
+                Status = "[PENDING]"
+            })
+        while ($queue.Count -gt $script:config.HistoryMaxSize) {
+            [void]$queue.Dequeue()
+        }
+    }
+    $script:historyReferenceTime = $startTime
+    if ($null -ne $script:mainDrawPanel -and -not $script:mainDrawPanel.IsDisposed) {
+        $script:mainDrawPanel.Invalidate()
+        $script:mainDrawPanel.Update()
+    }
+    $pingCallback = {
+        param($IP, $Status, $Time)
+
+        $script:serverStatuses[$IP] = $Status
+        if ($script:serverHistory.ContainsKey($IP)) {
+            $queue = $script:serverHistory[$IP]
+            $arr = @($queue)
+            for ($k = $arr.Count - 1; $k -ge 0; $k--) {
+                if ($arr[$k].Status -eq "[PENDING]" -and $arr[$k].Time -eq $script:currentPingStartTime) {
+                    $arr[$k] = [PSCustomObject]@{
+                        Time   = $arr[$k].Time
+                        Status = $Status
+                    }
+
+                    break
+                }
+            }
+            $newQueue = New-Object System.Collections.Generic.Queue[object]
+            foreach ($item in $arr) {
+                $newQueue.Enqueue($item)
+            }
+            $script:serverHistory[$IP] = $newQueue
+        }
+        $server = $script:config.Servers | Where-Object { $_.IP -eq $IP } | Select-Object -First 1
+        if ($null -ne $server) {
+            $displayText = Get-ServerDisplayText -Server $server
+            Write-Log -Message "$displayText $Status"
+        }
+        if ($null -ne $script:mainDrawPanel -and -not $script:mainDrawPanel.IsDisposed) {
+            $script:mainDrawPanel.Invalidate()
+        }
+    }
     $rs = [runspacefactory]::CreateRunspace()
     $rs.ApartmentState = "STA"
     $rs.Open()
     $ps = [powershell]::Create()
     $ps.Runspace = $rs
     $ps.AddScript({
-            param($Servers)
+            param($Servers, $DrawPanel, $PingCallback)
 
             $ping = New-Object System.Net.NetworkInformation.Ping
             foreach ($server in $Servers) {
@@ -63,38 +115,21 @@ function Start-PingJob {
                 catch {
                     $status = "[ERR]"
                 }
-                [PSCustomObject]@{
-                    IP     = $server.IP
-                    Status = $status
-                    Time   = Get-Date
-                }
+                $ip = $server.IP
+                $time = Get-Date
+                $DrawPanel.BeginInvoke([Action[string, string, System.DateTime]] {
+                        param($Ip, $St, $Tm)
+                        & $PingCallback $Ip $St $Tm
+                    }, $ip, $status, $time) | Out-Null
             }
             $ping.Dispose()
         })
     $ps.AddParameter('Servers', $serverList)
+    $ps.AddParameter('DrawPanel', $script:mainDrawPanel)
+    $ps.AddParameter('PingCallback', $pingCallback)
     $async = Invoke-Async -Ps $ps
     try {
-        $allResults = $ps.EndInvoke($async)
-        foreach ($r in $allResults) {
-            if ($null -eq $r) { continue }
-            $script:serverStatuses[$r.IP] = $r.Status
-            if (-not $script:serverHistory.ContainsKey($r.IP)) {
-                $script:serverHistory[$r.IP] = New-Object System.Collections.Generic.Queue[object]
-            }
-            $queue = $script:serverHistory[$r.IP]
-            $queue.Enqueue([PSCustomObject]@{
-                    Time   = $r.Time
-                    Status = $r.Status
-                })
-            while ($queue.Count -gt $script:config.HistoryMaxSize) {
-                [void]$queue.Dequeue()
-            }
-            $server = $serverList | Where-Object { $_.IP -eq $r.IP } | Select-Object -First 1
-            if ($null -ne $server) {
-                $displayText = Get-ServerDisplayText -Server $server
-                Write-Log -Message "$displayText $($r.Status)"
-            }
-        }
+        $ps.EndInvoke($async) | Out-Null
     }
     catch {
         Write-Log -Message "Ошибка пинга: $($_.Exception.Message)"
@@ -105,9 +140,6 @@ function Start-PingJob {
         Write-HistoryFile
         $rs.Dispose()
         $ps.Dispose()
-        $script:historyReferenceTime = Get-HistoryReferenceTime
-        if ($null -ne $script:mainDrawPanel -and -not $script:mainDrawPanel.IsDisposed) {
-            $script:mainDrawPanel.Invalidate()
-        }
+        $script:currentPingStartTime = $null
     }
 }

@@ -79,6 +79,7 @@ function Read-HistoryFile {
     foreach ($entry in $data) {
         $ip = $entry.IP
         if (-not $currentIPs.ContainsKey($ip)) { continue }
+        if ($entry.Status -eq "[PENDING]") { continue }
         try {
             $time = [DateTime]::Parse($entry.Time)
         }
@@ -125,6 +126,7 @@ function Write-HistoryFile {
         $queue = $script:serverHistory[$ip]
         if ($null -eq $queue) { continue }
         foreach ($entry in $queue) {
+            if ($entry.Status -eq "[PENDING]") { continue }
             $data += [PSCustomObject]@{
                 IP     = $ip
                 Time   = $entry.Time.ToString("o")

@@ -129,6 +129,7 @@ function Show-MainForm {
                         $x1 = $labelW + $j * $segmentWidth
                         $x2 = $labelW + ($j + 1) * $segmentWidth
                         $xMid = $x1 + ($x2 - $x1) * 0.5
+                        $isPending = ($entry.Status -eq "[PENDING]")
                         $isFail = ($entry.Status -eq "[FAIL]" -or $entry.Status -eq "[ERR]")
                         $y = if ($isFail) {
                             $dropY
@@ -136,7 +137,10 @@ function Show-MainForm {
                         else {
                             $centerY
                         }
-                        $color = if ($isFail) {
+                        $color = if ($isPending) {
+                            [System.Drawing.Color]::Black
+                        }
+                        elseif ($isFail) {
                             $failColor
                         }
                         else {
