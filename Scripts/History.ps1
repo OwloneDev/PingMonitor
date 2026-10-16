@@ -56,6 +56,99 @@ function Initialize-HistoryDisplayRows {
     return , $rows
 }
 
+# Прочитать историю из файла
+function Read-HistoryFile {
+    $file = Join-Path $script:root "history.json"
+    if (-not (Test-Path $file)) { return }
+    try {
+        $data = Get-Content $file -Raw | ConvertFrom-Json
+    }
+    catch {
+        Write-Log -Message "Ошибка чтения истории: $($_.Exception.Message)"
+
+        return
+    }
+    if ($null -eq $data) { return }
+    $maxAgeSeconds = $script:config.HistoryMaxSize * $script:config.Interval * 60
+    $cutoff = (Get-Date).AddSeconds(-$maxAgeSeconds)
+    $currentIPs = @{}
+    foreach ($server in $script:config.Servers) {
+        $currentIPs[$server.IP] = $true
+    }
+    $grouped = @{}
+    foreach ($entry in $data) {
+        $ip = $entry.IP
+        if (-not $currentIPs.ContainsKey($ip)) { continue }
+        try {
+            $time = [DateTime]::Parse($entry.Time)
+        }
+        catch {
+            continue
+        }
+        if ($time -lt $cutoff) { continue }
+        if (-not $grouped.ContainsKey($ip)) {
+            $grouped[$ip] = @()
+        }
+        $grouped[$ip] += [PSCustomObject]@{
+            Time   = $time
+            Status = $entry.Status
+        }
+    }
+    foreach ($ip in $grouped.Keys) {
+        $sorted = $grouped[$ip] | Sort-Object -Property Time
+        $queue = New-Object System.Collections.Generic.Queue[object]
+        $lastStatus = $null
+        foreach ($entry in $sorted) {
+            $queue.Enqueue($entry)
+            $lastStatus = $entry.Status
+        }
+        while ($queue.Count -gt $script:config.HistoryMaxSize) {
+            [void]$queue.Dequeue()
+        }
+        $script:serverHistory[$ip] = $queue
+        if ($null -ne $lastStatus) {
+            $script:serverStatuses[$ip] = $lastStatus
+        }
+    }
+}
+
+# Записать историю в файл
+function Write-HistoryFile {
+    $file = Join-Path $script:root "history.json"
+    $currentIPs = @{}
+    foreach ($server in $script:config.Servers) {
+        $currentIPs[$server.IP] = $true
+    }
+    $data = @()
+    foreach ($ip in $script:serverHistory.Keys) {
+        if (-not $currentIPs.ContainsKey($ip)) { continue }
+        $queue = $script:serverHistory[$ip]
+        if ($null -eq $queue) { continue }
+        foreach ($entry in $queue) {
+            $data += [PSCustomObject]@{
+                IP     = $ip
+                Time   = $entry.Time.ToString("o")
+                Status = $entry.Status
+            }
+        }
+    }
+    try {
+        if ($data.Count -eq 0) {
+            $json = "[]"
+        }
+        elseif ($data.Count -eq 1) {
+            $json = "[" + (ConvertTo-Json -InputObject $data[0] -Depth 3) + "]"
+        }
+        else {
+            $json = ConvertTo-Json -InputObject $data -Depth 3
+        }
+        $json | Set-Content $file -Encoding UTF8
+    }
+    catch {
+        Write-Log -Message "Ошибка сохранения истории: $($_.Exception.Message)"
+    }
+}
+
 # Обновить опорное время истории
 function Update-HistoryReferenceTime {
     if ($null -eq $script:historyReferenceTime) {

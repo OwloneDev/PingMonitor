@@ -34,17 +34,13 @@ function Update-PingButton {
 # Запустить пинг
 function Start-PingJob {
     if ($script:isPinging) { return }
-
     Update-PingButton -IsPinging $true
-
     $serverList = Get-ServerList
-
     if ($serverList.Count -eq 0) {
         Update-PingButton -IsPinging $false
 
         return
     }
-
     $rs = [runspacefactory]::CreateRunspace()
     $rs.ApartmentState = "STA"
     $rs.Open()
@@ -59,15 +55,14 @@ function Start-PingJob {
                     $reply = $ping.Send($server.IP, 3000)
                     $status = if ($reply.Status -eq [System.Net.NetworkInformation.IPStatus]::Success) {
                         "[OK]"
-                    } else {
+                    }
+                    else {
                         "[FAIL]"
                     }
                 }
                 catch {
                     $status = "[ERR]"
                 }
-
-                # Каждый объект выводим отдельно — EndInvoke вернёт их потоком
                 [PSCustomObject]@{
                     IP     = $server.IP
                     Status = $status
@@ -76,18 +71,13 @@ function Start-PingJob {
             }
             $ping.Dispose()
         })
-
     $ps.AddParameter('Servers', $serverList)
     $async = Invoke-Async -Ps $ps
-
     try {
         $allResults = $ps.EndInvoke($async)
-
         foreach ($r in $allResults) {
             if ($null -eq $r) { continue }
-
             $script:serverStatuses[$r.IP] = $r.Status
-
             if (-not $script:serverHistory.ContainsKey($r.IP)) {
                 $script:serverHistory[$r.IP] = New-Object System.Collections.Generic.Queue[object]
             }
@@ -96,10 +86,9 @@ function Start-PingJob {
                     Time   = $r.Time
                     Status = $r.Status
                 })
-            while ($queue.Count -gt $script:historyMaxSize) {
+            while ($queue.Count -gt $script:config.HistoryMaxSize) {
                 [void]$queue.Dequeue()
             }
-
             $server = $serverList | Where-Object { $_.IP -eq $r.IP } | Select-Object -First 1
             if ($null -ne $server) {
                 $displayText = Get-ServerDisplayText -Server $server
@@ -113,13 +102,10 @@ function Start-PingJob {
     finally {
         Update-PingButton -IsPinging $false
         Write-Log -Message ""
-
+        Write-HistoryFile
         $rs.Dispose()
         $ps.Dispose()
-
-        # Обновляем reference time и перерисовываем
         $script:historyReferenceTime = Get-HistoryReferenceTime
-
         if ($null -ne $script:mainDrawPanel -and -not $script:mainDrawPanel.IsDisposed) {
             $script:mainDrawPanel.Invalidate()
         }

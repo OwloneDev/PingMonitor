@@ -76,7 +76,7 @@ function New-Button {
 # Создать комбинированный список
 function New-ComboBox {
     $comboBox = New-Object System.Windows.Forms.ComboBox
-    $comboBox.Location = New-Object System.Drawing.Point(90, 200)
+    $comboBox.Location = New-Object System.Drawing.Point(100, 20)
     $comboBox.Size = New-Object System.Drawing.Size(100, 20)
     $comboBox.DropDownStyle = "DropDownList"
     $comboBox.Items.AddRange(@("Полное", "IP-адрес", "Имя сервера"))
@@ -101,6 +101,16 @@ function New-NumericUpDown {
     $numericUpDown.Value = $Value
 
     return $numericUpDown
+}
+
+# Создать групповой контейнер
+function New-GroupBox {
+    $groupBox = New-Object System.Windows.Forms.GroupBox
+    $groupBox.Location = New-Object System.Drawing.Point(10, 200)
+    $groupBox.Size = New-Object System.Drawing.Size(364, 170)
+    $groupBox.Text = "Дополнительные настройки"
+
+    return $groupBox
 }
 
 # Создать чекбокс

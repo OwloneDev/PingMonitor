@@ -11,6 +11,7 @@ function Start-App {
     Read-ConfigFile
     Read-LogFile
     Import-Config
+    Read-HistoryFile
     Update-HistoryReferenceTime
     Show-MainForm
 }
@@ -32,14 +33,13 @@ $script:pingButton = $null
 $script:historyReferenceTime = $null
 $script:isPinging = $false
 $script:isDiagnosticPinging = $false
-$script:historyMaxSize = 60
 $script:mainLabelWidth = 200
 $script:dragRowIndex = -1
 $script:dragInsertIndex = -1
 $script:mainHoverRow = -1
 $script:mainHoverSegment = -1
 $script:dragInsertSide = "Top"
-$script:version = "v1.1.0"
+$script:version = "v1.1.1"
 
 # Скрипты
 . "$PSScriptRoot\Forms\DiagnosticForm.ps1"

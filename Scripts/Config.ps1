@@ -10,12 +10,13 @@ function Import-Config {
     $defaults = @{
         Groups          = @()
         WindowSize      = [PSCustomObject]@{
-            Main       = [PSCustomObject]@{ Width = 296; Height = 200 }
-            Diagnostic = [PSCustomObject]@{ Width = 560; Height = 320 }
+            Main       = [PSCustomObject]@{ Width = 356; Height = 200 }
+            Diagnostic = [PSCustomObject]@{ Width = 566; Height = 320 }
         }
         DisplayMode     = "Full"
         Interval        = 60
         FontSize        = 10
+        HistoryMaxSize  = 60
         GroupingEnabled = $true
         LoggingEnabled  = $false
     }
@@ -42,6 +43,7 @@ function Import-Config {
             DisplayMode     = $defaults.DisplayMode
             Interval        = $defaults.Interval
             FontSize        = $defaults.FontSize
+            HistoryMaxSize  = $defaults.HistoryMaxSize
             GroupingEnabled = $defaults.GroupingEnabled
             LoggingEnabled  = $defaults.LoggingEnabled
         }

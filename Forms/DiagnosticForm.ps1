@@ -341,8 +341,10 @@ function Show-DiagnosticForm {
             }
         })
     $infinityCheckBox.Checked = $false
+    $diagnosticPanel.Padding = New-Object System.Windows.Forms.Padding(0, 10, 10, 0)
     $diagnosticPanel.Controls.Add($diagnosticConsole)
     $serversPanel.Width = 200
+    $serversPanel.Padding = New-Object System.Windows.Forms.Padding(10, 10, 0, 0)
     $serversPanel.Controls.Add($serversTree)
     $bottomPanel.Height = 50
     $bottomPanel.Controls.Add($infinityCheckBox)
@@ -350,7 +352,7 @@ function Show-DiagnosticForm {
     $bottomPanel.Controls.Add($clearButton)
     $bottomPanel.Controls.Add($closeButton)
     $diagnosticForm.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::Sizable
-    $diagnosticForm.MinimumSize = New-Object System.Drawing.Size(560, 320)
+    $diagnosticForm.MinimumSize = New-Object System.Drawing.Size(566, 320)
     $diagnosticForm.MinimizeBox = $false
     $diagnosticForm.Controls.Add($diagnosticPanel)
     $diagnosticForm.Controls.Add($serversPanel)

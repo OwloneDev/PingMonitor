@@ -169,18 +169,21 @@ function Show-SettingsForm {
             })
     }
     
-    $settingsForm = New-Form -Width 400 -Height 410 -Title "Настройки"
-    $displayLabel = New-Label -X 10 -Y 200 -Width 80 -Height 20 -Text "Отображение:"
-    $intervalLabel = New-Label -X 10 -Y 230 -Width 130 -Height 20 -Text "Интервал пинга (мин.):"
-    $fontSizeLabel = New-Label -X 10 -Y 260 -Width 130 -Height 20 -Text "Размер шрифта:"
-    $versionLabel = New-Label -X 130 -Y 341 -Width 60 -Height 20 -Text $script:version
-    $groupsButton = New-Button -X 10 -Y 331 -Width 100 -Text "Группы"
-    $okButton = New-Button -X 204 -Y 331 -Width 80 -Text "OK"
-    $cancelButton = New-Button -X 294 -Y 331 -Width 80 -Text "Отмена"
+    $settingsForm = New-Form -Width 400 -Height 460 -Title "Настройки"
+    $displayLabel = New-Label -X 10 -Y 20 -Width 80 -Height 20 -Text "Отображение:"
+    $intervalLabel = New-Label -X 10 -Y 50 -Width 130 -Height 20 -Text "Интервал пинга (мин.):"
+    $fontSizeLabel = New-Label -X 10 -Y 80 -Width 130 -Height 20 -Text "Размер шрифта:"
+    $historySizeLabel = New-Label -X 10 -Y 110 -Width 130 -Height 20 -Text "Длина графика:"
+    $versionLabel = New-Label -X 130 -Y 391 -Width 60 -Height 20 -Text $script:version
+    $groupsButton = New-Button -X 10 -Y 381 -Width 100 -Text "Группы"
+    $okButton = New-Button -X 204 -Y 381 -Width 80 -Text "OK"
+    $cancelButton = New-Button -X 294 -Y 381 -Width 80 -Text "Отмена"
     $displayComboBox = New-ComboBox
-    $intervalNumericUpDown = New-NumericUpDown -X 140 -Y 230 -Min 1 -Max 60 -Value $script:config.Interval
-    $fontSizeNumericUpDown = New-NumericUpDown -X 140 -Y 260 -Min 8 -Max 14 -Value $script:config.FontSize
-    $loggingCheckBox = New-CheckBox -X 10 -Y 290 -Width 180 -Height 20 -Text "Вести запись в журнал"
+    $settingsGroupBox = New-GroupBox
+    $intervalNumericUpDown = New-NumericUpDown -X 140 -Y 50 -Min 1 -Max 60 -Value $script:config.Interval
+    $fontSizeNumericUpDown = New-NumericUpDown -X 140 -Y 80 -Min 8 -Max 14 -Value $script:config.FontSize
+    $historySizeNumericUpDown = New-NumericUpDown -X 140 -Y 110 -Min 10 -Max 60 -Value $script:config.HistoryMaxSize
+    $loggingCheckBox = New-CheckBox -X 10 -Y 140 -Width 180 -Height 20 -Text "Вести запись в журнал"
     $serverDataGridView = New-DataGridView -Width 364
     $displayLabel.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
     $intervalLabel.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
@@ -190,20 +193,23 @@ function Show-SettingsForm {
     $okButton.DialogResult = "OK"
     $cancelButton.DialogResult = "Cancel"
     $loggingCheckBox.Checked = $script:config.LoggingEnabled
+    $settingsGroupBox.Controls.Add($displayLabel)
+    $settingsGroupBox.Controls.Add($intervalLabel)
+    $settingsGroupBox.Controls.Add($fontSizeLabel)
+    $settingsGroupBox.Controls.Add($historySizeLabel)
+    $settingsGroupBox.Controls.Add($displayComboBox)
+    $settingsGroupBox.Controls.Add($intervalNumericUpDown)
+    $settingsGroupBox.Controls.Add($fontSizeNumericUpDown)
+    $settingsGroupBox.Controls.Add($historySizeNumericUpDown)
+    $settingsGroupBox.Controls.Add($loggingCheckBox)
     $settingsForm.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedSingle
     $settingsForm.MinimizeBox = $false
     $settingsForm.Controls.Add($serverDataGridView)
-    $settingsForm.Controls.Add($displayLabel)
-    $settingsForm.Controls.Add($intervalLabel)
-    $settingsForm.Controls.Add($fontSizeLabel)
     $settingsForm.Controls.Add($versionLabel)
     $settingsForm.Controls.Add($groupsButton)
     $settingsForm.Controls.Add($okButton)
     $settingsForm.Controls.Add($cancelButton)
-    $settingsForm.Controls.Add($displayComboBox)
-    $settingsForm.Controls.Add($intervalNumericUpDown)
-    $settingsForm.Controls.Add($fontSizeNumericUpDown)
-    $settingsForm.Controls.Add($loggingCheckBox)
+    $settingsForm.Controls.Add($settingsGroupBox)
     $settingsForm.AcceptButton = $okButton
     $settingsForm.CancelButton = $cancelButton
     $groupsButton.Add_Click({
@@ -229,6 +235,7 @@ function Show-SettingsForm {
         $script:config.Servers = $newServers
         $script:config.Interval = [int]$intervalNumericUpDown.Value
         $script:config.FontSize = [int]$fontSizeNumericUpDown.Value
+        $script:config.HistoryMaxSize = [int]$historySizeNumericUpDown.Value
         $script:config.LoggingEnabled = $loggingCheckBox.Checked
         switch ($displayComboBox.SelectedIndex) {
             0 { $script:config.DisplayMode = 'Full' }

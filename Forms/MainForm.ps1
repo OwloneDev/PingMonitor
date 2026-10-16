@@ -13,8 +13,9 @@ function Show-MainForm {
     $settingsButton = New-Button -X 220 -Y 20 -Width 100 -Text "Настройки"
     $toolTip = New-ToolTip
     $mainForm.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::Sizable
-    $mainForm.MinimumSize = New-Object System.Drawing.Size(360, 200)
-    $dbProp = [System.Windows.Forms.Control].GetProperty("DoubleBuffered", [System.Reflection.BindingFlags]::Instance -bor [System.Reflection.BindingFlags]::NonPublic)
+    $mainForm.MinimumSize = New-Object System.Drawing.Size(356, 200)
+    $dbProp = [System.Windows.Forms.Control].GetProperty("DoubleBuffered",
+        [System.Reflection.BindingFlags]::Instance -bor [System.Reflection.BindingFlags]::NonPublic)
     $dbProp.SetValue($script:mainDrawPanel, $true, $null)
     [void]$table.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::Percent, 100)))
     [void]$table.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
@@ -110,10 +111,10 @@ function Show-MainForm {
                 if ($null -ne $queue -and $queue.Count -gt 0) {
                     $arr = @($queue)
                     $count = $arr.Count
-                    if ($count -gt $script:historyMaxSize) {
-                        $startIdx = $count - $script:historyMaxSize
+                    if ($count -gt $script:config.HistoryMaxSize) {
+                        $startIdx = $count - $script:config.HistoryMaxSize
                         $arr = $arr[$startIdx..($count - 1)]
-                        $count = $script:historyMaxSize
+                        $count = $script:config.HistoryMaxSize
                     }
                     $script:mainServerWindowSizes[$server.IP] = $count
                     $segmentWidth = $barWidth / $count
