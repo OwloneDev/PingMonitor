@@ -133,11 +133,11 @@ function Write-HistoryFile {
         }
     }
     try {
-        $saveRs = [runspacefactory]::CreateRunspace()
-        $saveRs.Open()
-        $savePs = [powershell]::Create()
-        $savePs.Runspace = $saveRs
-        $savePs.AddScript({
+        $rs = [runspacefactory]::CreateRunspace()
+        $rs.Open()
+        $ps = [powershell]::Create()
+        $ps.Runspace = $rs
+        $ps.AddScript({
                 param($Data, $FilePath)
                 try {
                     if ($Data.Count -eq 0) {
@@ -153,9 +153,9 @@ function Write-HistoryFile {
                 }
                 catch { }
             })
-        $savePs.AddArgument($data) | Out-Null
-        $savePs.AddArgument($file) | Out-Null
-        $savePs.BeginInvoke() | Out-Null
+        $ps.AddArgument($data) | Out-Null
+        $ps.AddArgument($file) | Out-Null
+        $ps.BeginInvoke() | Out-Null
     }
     catch {
         Write-Log -Message "Ошибка записи истории"
