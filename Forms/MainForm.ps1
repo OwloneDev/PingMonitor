@@ -276,7 +276,13 @@ function Show-MainForm {
             if ($null -ne $segMap -and $segMap.ContainsKey($newSegment)) {
                 $foundEntry = $segMap[$newSegment]
             }
+            $showTooltip = $true
             if ($null -ne $foundEntry) {
+                if ($foundEntry.Status -eq "[OK]" -and $script:config.HideOkTooltip) {
+                    $showTooltip = $false
+                }
+            }
+            if ($null -ne $foundEntry -and $showTooltip) {
                 $statusText = switch ($foundEntry.Status) {
                     "[OK]" { "OK" }
                     "[FAIL]" { "FAIL" }

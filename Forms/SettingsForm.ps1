@@ -169,21 +169,22 @@ function Show-SettingsForm {
             })
     }
     
-    $settingsForm = New-Form -Width 400 -Height 460 -Title "Настройки"
+    $settingsForm = New-Form -Width 400 -Height 490 -Title "Настройки"
     $displayLabel = New-Label -X 10 -Y 20 -Width 80 -Height 20 -Text "Отображение:"
     $intervalLabel = New-Label -X 10 -Y 50 -Width 130 -Height 20 -Text "Интервал пинга (мин.):"
     $fontSizeLabel = New-Label -X 10 -Y 80 -Width 130 -Height 20 -Text "Размер шрифта:"
     $historySizeLabel = New-Label -X 10 -Y 110 -Width 130 -Height 20 -Text "Длина графика:"
-    $versionLabel = New-Label -X 130 -Y 391 -Width 60 -Height 20 -Text $script:version
-    $groupsButton = New-Button -X 10 -Y 381 -Width 100 -Text "Группы"
-    $okButton = New-Button -X 204 -Y 381 -Width 80 -Text "OK"
-    $cancelButton = New-Button -X 294 -Y 381 -Width 80 -Text "Отмена"
+    $versionLabel = New-Label -X 130 -Y 421 -Width 60 -Height 20 -Text $script:version
+    $groupsButton = New-Button -X 10 -Y 411 -Width 100 -Text "Группы"
+    $okButton = New-Button -X 204 -Y 411 -Width 80 -Text "OK"
+    $cancelButton = New-Button -X 294 -Y 411 -Width 80 -Text "Отмена"
     $displayComboBox = New-ComboBox
     $settingsGroupBox = New-GroupBox
     $intervalNumericUpDown = New-NumericUpDown -X 140 -Y 50 -Min 1 -Max 60 -Value $script:config.Interval
     $fontSizeNumericUpDown = New-NumericUpDown -X 140 -Y 80 -Min 8 -Max 14 -Value $script:config.FontSize
     $historySizeNumericUpDown = New-NumericUpDown -X 140 -Y 110 -Min 10 -Max 60 -Value $script:config.HistoryMaxSize
     $loggingCheckBox = New-CheckBox -X 10 -Y 140 -Width 180 -Height 20 -Text "Вести запись в журнал"
+    $hideOkTooltipCheckBox = New-CheckBox -X 10 -Y 170 -Width 280 -Height 20 -Text "Скрывать время успешного пинга"
     $serverDataGridView = New-DataGridView -Width 364
     $displayLabel.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
     $intervalLabel.TextAlign = [System.Drawing.ContentAlignment]::MiddleLeft
@@ -193,6 +194,7 @@ function Show-SettingsForm {
     $okButton.DialogResult = "OK"
     $cancelButton.DialogResult = "Cancel"
     $loggingCheckBox.Checked = $script:config.LoggingEnabled
+    $hideOkTooltipCheckBox.Checked = $script:config.HideOkTooltip
     $settingsGroupBox.Controls.Add($displayLabel)
     $settingsGroupBox.Controls.Add($intervalLabel)
     $settingsGroupBox.Controls.Add($fontSizeLabel)
@@ -202,6 +204,7 @@ function Show-SettingsForm {
     $settingsGroupBox.Controls.Add($fontSizeNumericUpDown)
     $settingsGroupBox.Controls.Add($historySizeNumericUpDown)
     $settingsGroupBox.Controls.Add($loggingCheckBox)
+    $settingsGroupBox.Controls.Add($hideOkTooltipCheckBox)
     $settingsForm.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::FixedSingle
     $settingsForm.MinimizeBox = $false
     $settingsForm.Controls.Add($serverDataGridView)
@@ -237,6 +240,7 @@ function Show-SettingsForm {
         $script:config.FontSize = [int]$fontSizeNumericUpDown.Value
         $script:config.HistoryMaxSize = [int]$historySizeNumericUpDown.Value
         $script:config.LoggingEnabled = $loggingCheckBox.Checked
+        $script:config.HideOkTooltip = $hideOkTooltipCheckBox.Checked
         switch ($displayComboBox.SelectedIndex) {
             0 { $script:config.DisplayMode = 'Full' }
             1 { $script:config.DisplayMode = 'IP' }

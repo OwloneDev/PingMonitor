@@ -23,8 +23,8 @@ function Get-ServerList {
     }
 }
 
-# Обновить кнопку пинга
-function Update-PingButton {
+# Обновить статус пинга
+function Update-PingingStatus {
     param($IsPinging)
 
     $script:isPinging = $IsPinging
@@ -36,10 +36,10 @@ function Update-PingButton {
 # Запустить пинг
 function Start-PingJob {
     if ($script:isPinging) { return }
-    Update-PingButton -IsPinging $true
+    Update-PingingStatus -IsPinging $true
     [array]$serverList = Get-ServerList
     if ($serverList.Count -eq 0) {
-        Update-PingButton -IsPinging $false
+        Update-PingingStatus -IsPinging $false
 
         return
     }
@@ -140,7 +140,7 @@ function Start-PingJob {
         Write-Log -Message "Ошибка пинга: $($_.Exception.Message)"
     }
     finally {
-        Update-PingButton -IsPinging $false
+        Update-PingingStatus -IsPinging $false
         Write-Log -Message ""
         Write-HistoryFile
         $ps.Dispose()

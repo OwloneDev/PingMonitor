@@ -19,6 +19,7 @@ function Import-Config {
         HistoryMaxSize  = 60
         GroupingEnabled = $true
         LoggingEnabled  = $false
+        HideOkTooltip   = $false
     }
     if (Test-Path $script:configFile) {
         try {
@@ -46,6 +47,7 @@ function Import-Config {
             HistoryMaxSize  = $defaults.HistoryMaxSize
             GroupingEnabled = $defaults.GroupingEnabled
             LoggingEnabled  = $defaults.LoggingEnabled
+            HideOkTooltip   = $defaults.HideOkTooltip
         }
         Export-Config
     }

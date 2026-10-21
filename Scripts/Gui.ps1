@@ -120,7 +120,7 @@ function New-ComboBox {
 function New-GroupBox {
     $groupBox = New-Object System.Windows.Forms.GroupBox
     $groupBox.Location = New-Object System.Drawing.Point(10, 200)
-    $groupBox.Size = New-Object System.Drawing.Size(364, 170)
+    $groupBox.Size = New-Object System.Drawing.Size(364, 200)
     $groupBox.Text = "Дополнительные настройки"
 
     return $groupBox

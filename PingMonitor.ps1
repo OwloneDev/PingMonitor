@@ -41,7 +41,7 @@ $script:mainLabelWidth = 200
 $script:dragInsertIndex = -1
 $script:mainHoverSegment = -1
 $script:dragInsertSide = "Top"
-$script:version = "v1.1.5"
+$script:version = "v1.1.6"
 
 # Скрипты
 . "$PSScriptRoot\Forms\DiagnosticForm.ps1"
