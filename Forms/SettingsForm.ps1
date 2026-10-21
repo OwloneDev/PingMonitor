@@ -242,6 +242,7 @@ function Show-SettingsForm {
             1 { $script:config.DisplayMode = 'IP' }
             2 { $script:config.DisplayMode = 'Name' }
         }
+        Initialize-GraphicsCache
         Export-Config
         Update-Interval
         Start-PingJob

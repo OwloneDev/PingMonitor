@@ -73,20 +73,17 @@ function New-Button {
     return $button
 }
 
-# Создать комбинированный список
-function New-ComboBox {
-    $comboBox = New-Object System.Windows.Forms.ComboBox
-    $comboBox.Location = New-Object System.Drawing.Point(100, 20)
-    $comboBox.Size = New-Object System.Drawing.Size(100, 20)
-    $comboBox.DropDownStyle = "DropDownList"
-    $comboBox.Items.AddRange(@("Полное", "IP-адрес", "Имя сервера"))
-    switch ($script:config.DisplayMode) {
-        'Full' { $comboBox.SelectedIndex = 0 }
-        'IP' { $comboBox.SelectedIndex = 1 }
-        'Name' { $comboBox.SelectedIndex = 2 }
-    }
+# Создать прогресс-бар
+function New-ProgressBar {
+    $progressBar = New-Object System.Windows.Forms.ProgressBar
+    $progressBar.Dock = [System.Windows.Forms.DockStyle]::Top
+    $progressBar.Height = 20
+    $progressBar.Minimum = 0
+    $progressBar.Maximum = 100
+    $progressBar.Value = 0
+    $progressBar.Visible = $false
 
-    return $comboBox
+    return $progressBar
 }
 
 # Создать числовой счётчик
@@ -101,6 +98,22 @@ function New-NumericUpDown {
     $numericUpDown.Value = $Value
 
     return $numericUpDown
+}
+
+# Создать комбинированный список
+function New-ComboBox {
+    $comboBox = New-Object System.Windows.Forms.ComboBox
+    $comboBox.Location = New-Object System.Drawing.Point(100, 20)
+    $comboBox.Size = New-Object System.Drawing.Size(100, 20)
+    $comboBox.DropDownStyle = "DropDownList"
+    $comboBox.Items.AddRange(@("Полное", "IP-адрес", "Имя сервера"))
+    switch ($script:config.DisplayMode) {
+        'Full' { $comboBox.SelectedIndex = 0 }
+        'IP' { $comboBox.SelectedIndex = 1 }
+        'Name' { $comboBox.SelectedIndex = 2 }
+    }
+
+    return $comboBox
 }
 
 # Создать групповой контейнер
@@ -195,6 +208,29 @@ function New-StatusIcon {
     $m = $Size * 0.25
     $Graphics.FillEllipse($brush, $X + $m, $Y + $m, $Size - 2 * $m, $Size - 2 * $m)
     $brush.Dispose()
+}
+
+# Инициализировать кеш GDI-ресурсов
+function Initialize-GraphicsCache {
+    foreach ($res in @($script:gfxFont, $script:gfxHeaderFont, $script:gfxFontBrush,
+            $script:gfxHeaderBrush, $script:gfxPenOk, $script:gfxPenFail,
+            $script:gfxPenHover)) {
+        if ($null -ne $res) {
+            try {
+                $res.Dispose()
+            }
+            catch {
+                Write-Log -Message "Ошибка инициализации кеша GDI-ресурсов"
+            }
+        }
+    }
+    $script:gfxFont = New-Object System.Drawing.Font("Consolas", $script:config.FontSize)
+    $script:gfxHeaderFont = New-Object System.Drawing.Font("Consolas", $script:config.FontSize, [System.Drawing.FontStyle]::Bold)
+    $script:gfxFontBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::White)
+    $script:gfxHeaderBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::Cyan)
+    $script:gfxPenOk = New-Object System.Drawing.Pen ([System.Drawing.Color]::LimeGreen), 2
+    $script:gfxPenFail = New-Object System.Drawing.Pen ([System.Drawing.Color]::Red), 2
+    $script:gfxPenHover = New-Object System.Drawing.Pen ([System.Drawing.Color]::LightGray), 1
 }
 
 # Сместить форму

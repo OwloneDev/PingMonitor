@@ -79,7 +79,6 @@ function Read-HistoryFile {
     foreach ($entry in $data) {
         $ip = $entry.IP
         if (-not $currentIPs.ContainsKey($ip)) { continue }
-        if ($entry.Status -eq "[PENDING]") { continue }
         try {
             $time = [DateTime]::Parse($entry.Time)
         }
@@ -126,7 +125,6 @@ function Write-HistoryFile {
         $queue = $script:serverHistory[$ip]
         if ($null -eq $queue) { continue }
         foreach ($entry in $queue) {
-            if ($entry.Status -eq "[PENDING]") { continue }
             $data += [PSCustomObject]@{
                 IP     = $ip
                 Time   = $entry.Time.ToString("o")
@@ -135,19 +133,32 @@ function Write-HistoryFile {
         }
     }
     try {
-        if ($data.Count -eq 0) {
-            $json = "[]"
-        }
-        elseif ($data.Count -eq 1) {
-            $json = "[" + (ConvertTo-Json -InputObject $data[0] -Depth 3) + "]"
-        }
-        else {
-            $json = ConvertTo-Json -InputObject $data -Depth 3
-        }
-        $json | Set-Content $file -Encoding UTF8
+        $saveRs = [runspacefactory]::CreateRunspace()
+        $saveRs.Open()
+        $savePs = [powershell]::Create()
+        $savePs.Runspace = $saveRs
+        $savePs.AddScript({
+                param($Data, $FilePath)
+                try {
+                    if ($Data.Count -eq 0) {
+                        $json = "[]"
+                    }
+                    elseif ($Data.Count -eq 1) {
+                        $json = "[" + (ConvertTo-Json -InputObject $Data[0] -Depth 3) + "]"
+                    }
+                    else {
+                        $json = ConvertTo-Json -InputObject $Data -Depth 3
+                    }
+                    [System.IO.File]::WriteAllText($FilePath, $json, [System.Text.Encoding]::UTF8)
+                }
+                catch { }
+            })
+        $savePs.AddArgument($data) | Out-Null
+        $savePs.AddArgument($file) | Out-Null
+        $savePs.BeginInvoke() | Out-Null
     }
     catch {
-        Write-Log -Message "Ошибка сохранения истории: $($_.Exception.Message)"
+        Write-Log -Message "Ошибка записи истории"
     }
 }
 

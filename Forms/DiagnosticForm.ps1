@@ -189,8 +189,8 @@ function Show-DiagnosticForm {
             Write-Log -Message "Ошибка сбора информации о сервере: $($_.Exception.Message)"
         }
         finally {
-            $rs.Dispose()
             $ps.Dispose()
+            $rs.Dispose()
         }
     }
 

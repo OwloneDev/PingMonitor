@@ -2,15 +2,18 @@
 
 # Показать главную форму
 function Show-MainForm {
+    Initialize-GraphicsCache
     $rowHeight = 20
     $size = $script:config.WindowSize.Main
     $mainForm = New-Form -Width $size.Width -Height $size.Height -Title "Мониторинг серверов"
     $table = New-Table
-    $panel = New-Panel -Dock ([System.Windows.Forms.DockStyle]::Fill)
+    $panel = New-Panel -Dock ([System.Windows.Forms.DockStyle]::Bottom)
+    $buttonPanel = New-Panel -Dock ([System.Windows.Forms.DockStyle]::Bottom)
     $script:mainDrawPanel = New-Panel -Dock ([System.Windows.Forms.DockStyle]::Fill)
-    $diagnosticButton = New-Button -X 0 -Y 20 -Width 100 -Text "Диагностика"
-    $script:pingButton = New-Button -X 110 -Y 20 -Width 100 -Text "Пинг"
-    $settingsButton = New-Button -X 220 -Y 20 -Width 100 -Text "Настройки"
+    $script:diagnosticButton = New-Button -X 0 -Y 0 -Width 100 -Text "Диагностика"
+    $script:pingButton = New-Button -X 110 -Y 0 -Width 100 -Text "Пинг"
+    $script:settingsButton = New-Button -X 220 -Y 0 -Width 100 -Text "Настройки"
+    $script:progressBar = New-ProgressBar
     $toolTip = New-ToolTip
     $script:mainLastBounds = New-Object System.Drawing.Rectangle($mainForm.Location, $mainForm.Size)
     $mainForm.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::Sizable
@@ -22,10 +25,13 @@ function Show-MainForm {
     [void]$table.RowStyles.Add((New-Object System.Windows.Forms.RowStyle([System.Windows.Forms.SizeType]::AutoSize)))
     $table.Controls.Add($script:mainDrawPanel, 0, 0)
     $table.Controls.Add($panel, 0, 1)
-    $panel.Height = 50
-    $panel.Controls.Add($diagnosticButton)
-    $panel.Controls.Add($script:pingButton)
-    $panel.Controls.Add($settingsButton)
+    $panel.Height = 60
+    $panel.Controls.Add($buttonPanel)
+    $panel.Controls.Add($script:progressBar)
+    $buttonPanel.Height = 30
+    $buttonPanel.Controls.Add($script:diagnosticButton)
+    $buttonPanel.Controls.Add($script:pingButton)
+    $buttonPanel.Controls.Add($script:settingsButton)
     $script:mainDrawPanel.BackColor = [System.Drawing.Color]::Black
     $script:mainDrawPanel.AutoScroll = $true
     $mainForm.Controls.Add($table)
@@ -53,14 +59,17 @@ function Show-MainForm {
             $script:mainSnapper = [WindowSnapper]::new($mainForm.Handle)
         })
     $mainForm.AcceptButton = $script:pingButton
-    $diagnosticButton.Add_Click({ Show-DiagnosticForm })
+    $script:diagnosticButton.Add_Click({ Show-DiagnosticForm })
     $script:pingButton.Add_Click({ Start-PingJob })
-    $settingsButton.Add_Click({ Show-SettingsForm })
+    $script:settingsButton.Add_Click({ Show-SettingsForm })
     $script:mainDrawPanel.Add_Paint({
             param($s, $e)
 
-            $serverList = Get-ServerList
-            $script:mainDisplayRows = Initialize-HistoryDisplayRows -Servers $serverList
+            if ($script:mainDisplayRowsDirty) {
+                [array]$serverList = Get-ServerList
+                $script:mainDisplayRows = Initialize-HistoryDisplayRows -Servers $serverList
+                $script:mainDisplayRowsDirty = $false
+            }
             $g = $e.Graphics
             $g.TranslateTransform($s.AutoScrollPosition.X, $s.AutoScrollPosition.Y)
             $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
@@ -69,12 +78,10 @@ function Show-MainForm {
             $iconX = 5
             $iconPad = 4
             $textX = $iconX + $iconSize + $iconPad
-            $font = New-Object System.Drawing.Font("Consolas", $script:config.FontSize)
-            $headerFont = New-Object System.Drawing.Font("Consolas", $script:config.FontSize, [System.Drawing.FontStyle]::Bold)
-            $fontBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::White)
-            $headerBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::Cyan)
-            $okColor = [System.Drawing.Color]::LimeGreen
-            $failColor = [System.Drawing.Color]::Red
+            $font = $script:gfxFont
+            $headerFont = $script:gfxHeaderFont
+            $fontBrush = $script:gfxFontBrush
+            $headerBrush = $script:gfxHeaderBrush
             $maxLabelWidth = 0
             foreach ($row in $script:mainDisplayRows) {
                 $text = if ($row.Type -eq "Header") {
@@ -111,7 +118,7 @@ function Show-MainForm {
                 $row = $script:mainDisplayRows[$i]
                 $rowY = $i * $rowHeight
                 if ($row.Type -eq "Header") {
-                    $textY = $rowY + ($rowHeight - $g.MeasureString($row.Title, $headerFont).Height) / 2
+                    $textY = $rowY + ($rowHeight - $script:config.FontSize - 4) / 2
                     $g.DrawString($row.Title, $headerFont, $headerBrush, $iconX, $textY)
 
                     continue
@@ -120,10 +127,10 @@ function Show-MainForm {
                 $centerY = $rowY + ($rowHeight / 2)
                 $dropY = $rowY + $rowHeight - 3
                 $status = $script:serverStatuses[$server.IP]
-                $iconY = $rowY + ($rowHeight - $iconSize) / 2    
+                $iconY = $rowY + ($rowHeight - $iconSize) / 2
                 New-StatusIcon -Graphics $g -X $iconX -Y $iconY -Size $iconSize -Status $status
                 $displayText = Get-ServerDisplayText -Server $server
-                $textY = $rowY + ($rowHeight - $g.MeasureString($displayText, $font).Height) / 2
+                $textY = $rowY + ($rowHeight - $script:config.FontSize - 4) / 2
                 $g.DrawString($displayText, $font, $fontBrush, $textX, $textY)
                 $queue = $script:serverHistory[$server.IP]
                 if ($null -ne $queue -and $queue.Count -gt 0) {
@@ -141,39 +148,59 @@ function Show-MainForm {
                         $segMap[$j] = $arr[$j]
                     }
                     $script:mainLastSegMaps[$server.IP] = $segMap
+                    $penList = @($script:gfxPenOk, $script:gfxPenFail)
+                    $currentGroup = -1
+                    $currentPoints = $null
                     $lastY = $null
                     for ($j = 0; $j -lt $count; $j++) {
                         $entry = $arr[$j]
                         $x1 = $labelW + $j * $segmentWidth
                         $x2 = $labelW + ($j + 1) * $segmentWidth
                         $xMid = $x1 + ($x2 - $x1) * 0.5
-                        $isPending = ($entry.Status -eq "[PENDING]")
-                        $isFail = ($entry.Status -eq "[FAIL]" -or $entry.Status -eq "[ERR]")
+                        if ($entry.Status -eq "[FAIL]" -or $entry.Status -eq "[ERR]") {
+                            $gidx = 1
+                        }
+                        else {
+                            $gidx = 0
+                        }
+                        $isFail = ($gidx -eq 1)
                         $y = if ($isFail) {
                             $dropY
                         }
                         else {
                             $centerY
                         }
-                        $color = if ($isPending) {
-                            [System.Drawing.Color]::Black
-                        }
-                        elseif ($isFail) {
-                            $failColor
-                        }
-                        else {
-                            $okColor
-                        }
-                        $pen = New-Object System.Drawing.Pen $color, 2
                         if ($null -ne $lastY -and [math]::Abs($lastY - $y) -gt 0.5) {
-                            $g.DrawLine($pen, $x1, $lastY, $xMid, $y)
-                            $g.DrawLine($pen, $xMid, $y, $x2, $y)
+                            $pts = @(
+                                (New-Object System.Drawing.PointF ($x1, $lastY)),
+                                (New-Object System.Drawing.PointF ($xMid, $y)),
+                                (New-Object System.Drawing.PointF ($x2, $y))
+                            )
                         }
                         else {
-                            $g.DrawLine($pen, $x1, $y, $x2, $y)
+                            $pts = @(
+                                (New-Object System.Drawing.PointF ($x1, $y)),
+                                (New-Object System.Drawing.PointF ($x2, $y))
+                            )
                         }
-                        $pen.Dispose()
+                        if ($gidx -eq $currentGroup -and $null -ne $currentPoints) {
+                            $lastPt = $currentPoints[$currentPoints.Count - 1]
+                            $newPt = $pts[$pts.Count - 1]
+                            if ($lastPt.X -ne $newPt.X -or $lastPt.Y -ne $newPt.Y) {
+                                $currentPoints = $currentPoints + @($newPt)
+                            }
+                        }
+                        else {
+                            if ($null -ne $currentPoints -and $currentPoints.Count -ge 2) {
+                                $g.DrawLines($penList[$currentGroup], [System.Drawing.PointF[]]$currentPoints)
+                            }
+                            $currentGroup = $gidx
+                            $currentPoints = $pts
+                        }
                         $lastY = $y
+                    }
+                    if ($null -ne $currentPoints -and $currentPoints.Count -ge 2) {
+                        $g.DrawLines($penList[$currentGroup], [System.Drawing.PointF[]]$currentPoints)
                     }
                 }
                 else {
@@ -190,16 +217,10 @@ function Show-MainForm {
                         if ($hw -lt 1) {
                             $hw = 1
                         }
-                        $pen = New-Object System.Drawing.Pen ([System.Drawing.Color]::LightGray), 1
-                        $g.DrawRectangle($pen, $hx, $rowY + 1, $hw - 1, $rowHeight - 3)
-                        $pen.Dispose()
+                        $g.DrawRectangle($script:gfxPenHover, $hx, $rowY + 1, $hw - 1, $rowHeight - 3)
                     }
                 }
             }
-            $font.Dispose()
-            $headerFont.Dispose()
-            $fontBrush.Dispose()
-            $headerBrush.Dispose()
         })
     $script:mainDrawPanel.Add_MouseMove({
             param($s, $e)
@@ -255,12 +276,12 @@ function Show-MainForm {
             if ($null -ne $segMap -and $segMap.ContainsKey($newSegment)) {
                 $foundEntry = $segMap[$newSegment]
             }
-            if ($null -ne $foundEntry -and ($foundEntry.Status -eq "[FAIL]" -or $foundEntry.Status -eq "[ERR]")) {
-                $statusText = if ($foundEntry.Status -eq "[FAIL]") {
-                    "FAIL"
-                }
-                else {
-                    "ERR"
+            if ($null -ne $foundEntry) {
+                $statusText = switch ($foundEntry.Status) {
+                    "[OK]" { "OK" }
+                    "[FAIL]" { "FAIL" }
+                    "[ERR]" { "ERR" }
+                    default { $foundEntry.Status }
                 }
                 $tipText = "$($server.Name) ($($server.IP))`nВремя: $($foundEntry.Time.ToString('dd.MM.yyyy HH:mm:ss'))`nСтатус: $statusText"
                 $toolTip.SetToolTip($s, $tipText)
